@@ -1,0 +1,16 @@
+paths:
+  /example:
+    get:
+      summary: Example endpoint
+      description: This endpoint returns an example response.
+      responses:
+        '200':
+          description: A successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "This is an example response."
