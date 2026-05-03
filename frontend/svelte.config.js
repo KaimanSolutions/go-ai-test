@@ -1,5 +1,10 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 export default {
-  plugins: [svelte()]
+  plugins: [svelte()],
+  compilerOptions: {
+    compatibility: {
+      componentApi: 4
+    }
+  }
 };

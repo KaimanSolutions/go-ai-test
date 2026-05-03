@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { fetchBrandingSettings, saveBrandingSettings } from '../lib/auth.js';
 
-  let branding = {
+  let branding = $state({
     primaryColor: '',
     accentColor: '',
     backgroundColor: '',
@@ -12,9 +12,9 @@
     mutedTextColor: '',
     fontBody: '',
     fontHeading: ''
-  };
+  });
 
-  let error = '';
+  let error = $state('');
 
   async function loadBranding() {
     const response = await fetchBrandingSettings();
@@ -82,7 +82,7 @@
       <input id="fontHeading" type="text" bind:value={branding.fontHeading} />
     </div>
   </div>
-  <button class="mt-4 p-2 bg-blue-500 text-white rounded" on:click={saveBranding}>Save Settings</button>
+  <button class="mt-4 p-2 bg-blue-500 text-white rounded" onclick={saveBranding}>Save Settings</button>
 </main>
 
 <style>

@@ -1,8 +1,8 @@
 <script>
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
-  let username = '';
-  let password = '';
+  let username = $state('');
+  let password = $state('');
 
   function submitLogin() {
     dispatch('login', { username, password });
@@ -27,7 +27,7 @@
           id="username"
           class="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 shadow-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
           bind:value={username}
-          placeholder="admin"
+          placeholder="user@email.com"
         />
       </div>
 
@@ -45,14 +45,14 @@
       <div class="flex flex-col gap-3 sm:flex-row">
         <button
           class="inline-flex justify-center rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:bg-sky-400"
-          on:click={submitLogin}
+          onclick={submitLogin}
         >
-          Continue
+          Login
         </button>
         <button
           type="button"
           class="inline-flex justify-center rounded-2xl border border-slate-800 bg-slate-900 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-          on:click={startSSO}
+          onclick={startSSO}
         >
           Sign in with SSO
         </button>

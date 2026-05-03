@@ -1,13 +1,17 @@
 <script>
+  import { run } from 'svelte/legacy';
+
   import { createEventDispatcher } from 'svelte';
-  export let schema;
+  let { schema } = $props();
   const dispatch = createEventDispatcher();
 
-  let currentSchema = schema ? JSON.parse(JSON.stringify(schema)) : { id: '', title: '', description: '', steps: [] };
+  let currentSchema = $state(schema ? JSON.parse(JSON.stringify(schema)) : { id: '', title: '', description: '', steps: [] });
 
-  $: if (schema) {
-    currentSchema = JSON.parse(JSON.stringify(schema));
-  }
+  run(() => {
+    if (schema) {
+      currentSchema = JSON.parse(JSON.stringify(schema));
+    }
+  });
 
   function addStep() {
     currentSchema.steps.push({ title: 'New Step', fields: [] });
@@ -64,7 +68,7 @@
             bind:value={step.title}
             placeholder="Step Title"
           />
-          <button class="ml-4 rounded-2xl bg-red-500 px-3 py-2 text-sm font-semibold text-white" on:click={() => removeStep(stepIndex)}>Remove Step</button>
+          <button class="ml-4 rounded-2xl bg-red-500 px-3 py-2 text-sm font-semibold text-white" onclick={() => removeStep(stepIndex)}>Remove Step</button>
         </div>
 
         <div class="mt-4 space-y-4">
@@ -72,7 +76,7 @@
             <div class="rounded-2xl border border-slate-800 bg-slate-950 p-4">
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-white">Field {fieldIndex + 1}</span>
-                <button class="rounded-2xl bg-red-500 px-2 py-1 text-xs font-semibold text-white" on:click={() => removeField(stepIndex, fieldIndex)}>Remove</button>
+                <button class="rounded-2xl bg-red-500 px-2 py-1 text-xs font-semibold text-white" onclick={() => removeField(stepIndex, fieldIndex)}>Remove</button>
               </div>
 
               <div class="mt-3 grid gap-3 sm:grid-cols-2">
@@ -132,15 +136,15 @@
             </div>
           {/each}
 
-          <button class="rounded-2xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white" on:click={() => addField(stepIndex)}>Add Field</button>
+          <button class="rounded-2xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white" onclick={() => addField(stepIndex)}>Add Field</button>
         </div>
       </div>
     {/each}
 
-    <button class="rounded-2xl bg-green-500 px-4 py-3 text-sm font-semibold text-white" on:click={addStep}>Add Step</button>
+    <button class="rounded-2xl bg-green-500 px-4 py-3 text-sm font-semibold text-white" onclick={addStep}>Add Step</button>
   </div>
 
   <div class="mt-6 flex justify-end">
-    <button class="rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold text-white" on:click={save}>Save Form</button>
+    <button class="rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold text-white" onclick={save}>Save Form</button>
   </div>
 </div>

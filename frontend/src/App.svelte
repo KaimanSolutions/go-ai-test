@@ -7,15 +7,15 @@
   import Settings from './components/Settings.svelte';
   import HelpCentre from './components/HelpCentre.svelte';
 
-  let token = '';
-  let user = null;
-  let error = '';
-  let selectedPage = 'Dashboard';
-  let schema = null;
+  let token = $state('');
+  let user = $state(null);
+  let error = $state('');
+  let selectedPage = $state('Dashboard');
+  let schema = $state(null);
   let validationResult = null;
-  let schemas = [];
+  let schemas = $state([]);
   let selectedFormId = 'loan-application';
-  let branding = {
+  let branding = $state({
     primaryColor: '#0ea5e9',
     accentColor: '#7c3aed',
     backgroundColor: '#0f172a',
@@ -25,7 +25,7 @@
     mutedTextColor: '#94a3b8',
     fontBody: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
     fontHeading: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
-  };
+  });
   const menuItems = ['Dashboard', 'Forms', 'Settings', 'Integrations', 'Help Centre'];
   const fontOptions = [
     { value: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif', label: 'Inter' },
@@ -143,7 +143,7 @@
     await loadSchemas();
   });
 
-  $: styleVars = `--brand-primary: ${branding.primaryColor}; --brand-accent: ${branding.accentColor}; --brand-bg: ${branding.backgroundColor}; --brand-surface: ${branding.surfaceColor}; --brand-card: ${branding.cardColor}; --brand-text: ${branding.textColor}; --brand-muted: ${branding.mutedTextColor}; --font-body: ${branding.fontBody}; --font-heading: ${branding.fontHeading};`;
+  let styleVars = $derived(`--brand-primary: ${branding.primaryColor}; --brand-accent: ${branding.accentColor}; --brand-bg: ${branding.backgroundColor}; --brand-surface: ${branding.surfaceColor}; --brand-card: ${branding.cardColor}; --brand-text: ${branding.textColor}; --brand-muted: ${branding.mutedTextColor}; --font-body: ${branding.fontBody}; --font-heading: ${branding.fontHeading};`);
 </script>
 
 <style>
@@ -177,7 +177,7 @@
 
   {#if !token}
     <div class="relative flex flex-1 items-center justify-center overflow-hidden rounded-[2rem] border border-brand-surface bg-brand-surface/80 p-6 shadow-2xl sm:p-10">
-      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.24),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.18),_transparent_25%)]" />
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.24),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.18),_transparent_25%)]"></div>
       <div class="relative grid w-full max-w-5xl gap-8 rounded-[1.75rem] bg-slate-950/95 p-6 shadow-xl sm:grid-cols-[1.2fr_0.8fr] sm:p-10">
         <div class="space-y-6">
           <div>
@@ -186,14 +186,14 @@
           </div>
           <div class="grid gap-4 rounded-[1.5rem] border border-slate-800 bg-slate-900/80 p-5 text-sm text-slate-300 shadow-inner">
             <div class="flex items-start gap-3">
-              <div class="mt-1 h-3.5 w-3.5 rounded-full bg-sky-400" />
+              <div class="mt-1 h-3.5 w-3.5 rounded-full bg-sky-400"></div>
               <div>
                 <p class="font-semibold text-slate-100">Enterprise-grade forms</p>
                 <p class="mt-1 leading-6 text-slate-400">Build and save adaptive application forms with conditional validation rules.</p>
               </div>
             </div>
             <div class="flex items-start gap-3">
-              <div class="mt-1 h-3.5 w-3.5 rounded-full bg-violet-400" />
+              <div class="mt-1 h-3.5 w-3.5 rounded-full bg-violet-400"></div>
               <div>
                 <p class="font-semibold text-slate-100">SSO enabled</p>
                 <p class="mt-1 leading-6 text-slate-400">Connect to your identity provider for secure single sign-on access.</p>
@@ -222,7 +222,7 @@
           {#each menuItems as item}
             <button
               class="w-full rounded-2xl px-4 py-3 text-left text-sm font-semibold transition {selectedPage === item ? 'bg-slate-800 text-white shadow-inner' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}"
-              on:click={() => selectedPage = item}
+              onclick={() => selectedPage = item}
             >
               {item}
             </button>
@@ -280,7 +280,7 @@
                 <h3 class="text-xl font-semibold text-white">Forms</h3>
                 <p class="mt-2 text-sm text-slate-400">Manage your form schemas.</p>
               </div>
-              <button class="rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400" on:click={createNewForm}>Create New Form</button>
+              <button class="rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400" onclick={createNewForm}>Create New Form</button>
             </div>
             <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {#each schemas as schema}
@@ -288,8 +288,8 @@
                   <h4 class="text-lg font-semibold text-white">{schema.title}</h4>
                   <p class="mt-2 text-sm text-slate-400">{schema.description}</p>
                   <div class="mt-4 flex gap-2">
-                    <button class="rounded-2xl bg-sky-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-sky-400" on:click={() => editForm(schema.id)}>Edit</button>
-                    <button class="rounded-2xl border border-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800" on:click={() => deleteForm(schema.id)}>Delete</button>
+                    <button class="rounded-2xl bg-sky-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-sky-400" onclick={() => editForm(schema.id)}>Edit</button>
+                    <button class="rounded-2xl border border-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800" onclick={() => deleteForm(schema.id)}>Delete</button>
                   </div>
                 </div>
               {/each}
@@ -302,7 +302,7 @@
                 <h3 class="text-xl font-semibold text-white">Branding settings</h3>
                 <p class="mt-2 text-sm text-slate-400">Update colors, fonts, and theme options for your platform.</p>
               </div>
-              <button class="rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400" on:click={saveBranding}>
+              <button class="rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400" onclick={saveBranding}>
                 Save branding
               </button>
             </div>

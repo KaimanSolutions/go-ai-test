@@ -1,21 +1,31 @@
 <script>
+  import { run } from 'svelte/legacy';
+
   import { createEventDispatcher } from 'svelte';
   import { isFieldVisible } from '../lib/formBuilder.js';
-  export let schema;
-  export let validationResult = null;
+  /**
+   * @typedef {Object} Props
+   * @property {any} schema
+   * @property {any} [validationResult]
+   */
+
+  /** @type {Props} */
+  let { schema, validationResult = null } = $props();
   const dispatch = createEventDispatcher();
 
-  let currentStep = 0;
-  let values = {};
+  let currentStep = $state(0);
+  let values = $state({});
 
-  $: if (schema) {
-    values = {};
-    schema.steps.forEach(step => {
-      step.fields.forEach(field => {
-        values[field.name] = field.defaultValue ?? '';
+  run(() => {
+    if (schema) {
+      values = {};
+      schema.steps.forEach(step => {
+        step.fields.forEach(field => {
+          values[field.name] = field.defaultValue ?? '';
+        });
       });
-    });
-  }
+    }
+  });
 
   function nextStep() {
     if (currentStep < schema.steps.length - 1) {
@@ -69,7 +79,7 @@
               type="number"
               class="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-white shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
               value={values[field.name] || ''}
-              on:input={(e) => values[field.name] = e.target.value}
+              oninput={(e) => values[field.name] = e.target.value}
             />
           {:else}
             <input
@@ -77,7 +87,7 @@
               type={field.type}
               class="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-white shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
               value={values[field.name] || ''}
-              on:input={(e) => values[field.name] = e.target.value}
+              oninput={(e) => values[field.name] = e.target.value}
             />
           {/if}
         </div>
@@ -86,12 +96,12 @@
 
     <div class="flex justify-between">
       {#if currentStep > 0}
-        <button class="rounded-2xl bg-slate-600 px-4 py-2 text-sm font-semibold text-white" on:click={prevStep}>Previous</button>
+        <button class="rounded-2xl bg-slate-600 px-4 py-2 text-sm font-semibold text-white" onclick={prevStep}>Previous</button>
       {/if}
       {#if currentStep < schema.steps.length - 1}
-        <button class="rounded-2xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white" on:click={nextStep}>Next</button>
+        <button class="rounded-2xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white" onclick={nextStep}>Next</button>
       {:else}
-        <button class="rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-white" on:click={submit}>Submit</button>
+        <button class="rounded-2xl bg-green-500 px-4 py-2 text-sm font-semibold text-white" onclick={submit}>Submit</button>
       {/if}
     </div>
 
