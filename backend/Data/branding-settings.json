@@ -1,0 +1,11 @@
+{
+  "PrimaryColor": "#ec270b",
+  "AccentColor": "#48f235",
+  "BackgroundColor": "#360903",
+  "SurfaceColor": "#111827",
+  "CardColor": "#1f2937",
+  "TextColor": "#e2e8f0",
+  "MutedTextColor": "#4f6dfd",
+  "FontBody": "\u0027Helvetica Neue\u0027, Helvetica, Arial, sans-serif",
+  "FontHeading": "Roboto, sans-serif"
+}
