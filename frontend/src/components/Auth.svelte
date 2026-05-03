@@ -15,16 +15,13 @@
 
 <div class="space-y-6">
   <div class="rounded-3xl border border-slate-800 bg-slate-950/90 p-6 shadow-xl ring-1 ring-white/5">
-    <div class="mb-6">
-      
-      <p class="mt-3 text-sm leading-6 text-slate-400">Use your admin credentials or SSO to continue to the mortgage builder dashboard.</p>
-    </div>
 
     <div class="space-y-5">
       <div>
         <label for="username" class="block text-sm font-medium text-slate-300">Username</label>
         <input
           id="username"
+          type="email"
           class="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 shadow-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
           bind:value={username}
           placeholder="user@email.com"
