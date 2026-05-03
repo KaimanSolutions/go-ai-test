@@ -93,4 +93,11 @@ public sealed class BrandingSettingsService
     }
 
     private static BrandingSettings GetDefaultSettings() => new();
+
+    // Add migration logic for HelpArticle
+    public void EnsureDatabaseSetup()
+    {
+        // Implement actual database migration logic here, e.g., using Entity Framework or another ORM
+        Console.WriteLine("Ensure database schema includes HelpArticle table.");
+    }
 }

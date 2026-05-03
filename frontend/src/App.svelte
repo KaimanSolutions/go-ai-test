@@ -4,6 +4,8 @@
   import FormBuilder from './components/FormBuilder.svelte';
   import FormRenderer from './components/FormRenderer.svelte';
   import { login, startSSO, fetchBrandingSettings, saveBrandingSettings, fetchSchemas, fetchSchema, saveSchema, validateSubmission } from './lib/auth.js';
+  import Settings from './components/Settings.svelte';
+  import HelpCentre from './components/HelpCentre.svelte';
 
   let token = '';
   let user = null;
@@ -364,7 +366,7 @@
               <div class="rounded-3xl border border-slate-800 bg-slate-950/90 p-5 text-slate-300">Loan pricing engine</div>
             </div>
           </section>
-        {:else}
+        {:else if selectedPage === 'Help Centre'}
           <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl">
             <h3 class="text-xl font-semibold text-white">Help Centre</h3>
             <p class="mt-3 text-sm text-slate-400">Find documentation, support, and onboarding resources.</p>
@@ -372,6 +374,11 @@
               <div class="rounded-3xl border border-slate-800 bg-slate-950/90 p-5 text-slate-300">Documentation and tutorials.</div>
               <div class="rounded-3xl border border-slate-800 bg-slate-950/90 p-5 text-slate-300">Contact support or open a ticket.</div>
             </div>
+          </section>
+        {:else}
+          <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl">
+            <h3 class="text-xl font-semibold text-white">Page Not Found</h3>
+            <p class="mt-3 text-sm text-slate-400">The page you are looking for does not exist.</p>
           </section>
         {/if}
       </main>
