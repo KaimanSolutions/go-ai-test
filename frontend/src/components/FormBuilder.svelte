@@ -1,13 +1,11 @@
 <script>
-  import { run } from 'svelte/legacy';
-
   import { createEventDispatcher } from 'svelte';
   let { schema } = $props();
   const dispatch = createEventDispatcher();
 
   let currentSchema = $state(schema ? JSON.parse(JSON.stringify(schema)) : { id: '', title: '', description: '', steps: [] });
 
-  run(() => {
+  $effect(() => {
     if (schema) {
       currentSchema = JSON.parse(JSON.stringify(schema));
     }
@@ -33,8 +31,35 @@
     currentSchema = { ...currentSchema };
   }
 
+  function normalizeSchema(schema) {
+    return {
+      ...schema,
+      steps: schema.steps.map(step => ({
+        ...step,
+        fields: step.fields.map(field => {
+          const normalizedField = { ...field };
+
+          if (normalizedField.type === 'select') {
+            if (typeof normalizedField.options === 'string') {
+              normalizedField.options = normalizedField.options
+                .split(',')
+                .map(option => option.trim())
+                .filter(Boolean);
+            } else if (!Array.isArray(normalizedField.options)) {
+              normalizedField.options = [];
+            }
+          } else {
+            normalizedField.options = [];
+          }
+
+          return normalizedField;
+        })
+      }))
+    };
+  }
+
   function save() {
-    dispatch('save', currentSchema);
+    dispatch('save', normalizeSchema(currentSchema));
   }
 </script>
 

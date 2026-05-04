@@ -24,6 +24,15 @@ public class FormBuilderController : ControllerBase
         return Ok(_schemaService.GetAllSchemas());
     }
 
+    [HttpGet("schema/{id}")]
+    public IActionResult GetSchema(string id)
+    {
+        var schema = _schemaService.GetSchema(id);
+        if (schema is null)
+            return NotFound($"Schema '{id}' not found.");
+        return Ok(schema);
+    }
+
     [Authorize]
     [HttpPost("schema")]
     public IActionResult SaveSchema([FromBody] FormSchema schema)
@@ -33,6 +42,18 @@ public class FormBuilderController : ControllerBase
 
         _schemaService.SaveSchema(schema);
         return Ok(schema);
+    }
+
+    [Authorize]
+    [HttpDelete("schema/{id}")]
+    public IActionResult DeleteSchema(string id)
+    {
+        var existing = _schemaService.GetSchema(id);
+        if (existing is null)
+            return NotFound($"Schema '{id}' not found.");
+
+        _schemaService.DeleteSchema(id);
+        return NoContent();
     }
 
     [HttpPost("validate")]

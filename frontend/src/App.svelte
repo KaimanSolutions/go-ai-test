@@ -3,9 +3,10 @@
   import Auth from './components/Auth.svelte';
   import FormBuilder from './components/FormBuilder.svelte';
   import FormRenderer from './components/FormRenderer.svelte';
-  import { login, startSSO, fetchBrandingSettings, saveBrandingSettings, fetchSchemas, fetchSchema, saveSchema, validateSubmission } from './lib/auth.js';
+  import { login, startSSO, fetchBrandingSettings, saveBrandingSettings, fetchSchemas, fetchSchema, saveSchema, validateSubmission, deleteSchema } from './lib/auth.js';
   import Settings from './components/Settings.svelte';
   import HelpCentre from './components/HelpCentre.svelte';
+  import Profile from './components/Profile.svelte';
 
   let token = $state('');
   let user = $state(null);
@@ -26,7 +27,7 @@
     fontBody: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
     fontHeading: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
   });
-  const menuItems = ['Dashboard', 'Forms', 'Settings', 'Integrations', 'Help Centre'];
+  const menuItems = ['Dashboard', 'Forms', 'Settings', 'Integrations', 'Help Centre', 'Profile'];
   const fontOptions = [
     { value: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif', label: 'Inter' },
     { value: 'Roboto, sans-serif', label: 'Roboto' },
@@ -60,8 +61,9 @@
     await loadSchemas();
   }
 
-  async function handleSSO() {
-    await startSSO();
+  async function handleSSO(event) {
+    const provider = event.detail?.provider || 'generic';
+    await startSSO(provider);
   }
 
   async function loadSchema() {
@@ -106,6 +108,8 @@
       return;
     }
     schema = response;
+    await loadSchemas();
+    selectedPage = 'Forms';
   }
 
   async function saveBranding() {
@@ -125,16 +129,21 @@
   function createNewForm() {
     selectedFormId = 'new-' + Date.now();
     schema = { id: selectedFormId, title: 'New Form', description: '', steps: [] };
-    selectedPage = 'Settings';
+    selectedPage = 'Create Form';
   }
 
   function editForm(id) {
     selectedFormId = id;
-    selectedPage = 'Settings';
+    selectedPage = 'Create Form';
     loadSchema();
   }
 
-  function deleteForm(id) {
+  async function deleteForm(id) {
+    const response = await deleteSchema(id, token);
+    if (response.error) {
+      error = response.error;
+      return;
+    }
     schemas = schemas.filter(s => s.id !== id);
   }
 
@@ -160,7 +169,7 @@
   <div class="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-8 sm:px-6 lg:px-8">
     <header class="flex items-center justify-between gap-6 pb-6 text-brand-text">
       <div>
-        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Mortgage Originations Platform</h1>
+        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">lend2me</h1>
       </div>
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-sm text-slate-300 shadow-sm">
         {#if user}
@@ -295,6 +304,21 @@
               {/each}
             </div>
           </section>
+        {:else if selectedPage === 'Create Form'}
+          <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 class="text-xl font-semibold text-white">Form Builder</h3>
+                <p class="mt-2 text-sm text-slate-400">Create or edit form schemas in a dedicated editor.</p>
+              </div>
+              <button class="rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800" onclick={() => selectedPage = 'Forms'}>
+                Back to forms
+              </button>
+            </div>
+            <div class="mt-6">
+              <FormBuilder {schema} on:save={event => handleSave(event.detail)} />
+            </div>
+          </section>
         {:else if selectedPage === 'Settings'}
           <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -352,9 +376,6 @@
               <p class="text-lg font-semibold text-brand-primary" style="font-family: var(--font-heading);">Live theme preview</p>
               <p class="mt-2 text-sm text-slate-400">Your current branding values are applied across the platform.</p>
             </div>
-            <div class="mt-6">
-              <FormBuilder {schema} on:save={event => handleSave(event.detail)} />
-            </div>
           </section>
         {:else if selectedPage === 'Integrations'}
           <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl">
@@ -367,14 +388,9 @@
             </div>
           </section>
         {:else if selectedPage === 'Help Centre'}
-          <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl">
-            <h3 class="text-xl font-semibold text-white">Help Centre</h3>
-            <p class="mt-3 text-sm text-slate-400">Find documentation, support, and onboarding resources.</p>
-            <div class="mt-6 grid gap-4 sm:grid-cols-2">
-              <div class="rounded-3xl border border-slate-800 bg-slate-950/90 p-5 text-slate-300">Documentation and tutorials.</div>
-              <div class="rounded-3xl border border-slate-800 bg-slate-950/90 p-5 text-slate-300">Contact support or open a ticket.</div>
-            </div>
-          </section>
+          <HelpCentre />
+        {:else if selectedPage === 'Profile'}
+          <Profile {token} {user} />
         {:else}
           <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl">
             <h3 class="text-xl font-semibold text-white">Page Not Found</h3>

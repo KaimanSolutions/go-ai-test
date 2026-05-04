@@ -10,12 +10,10 @@ namespace FormBuilder.Backend.Controllers;
 public class SettingsController : ControllerBase
 {
     private readonly BrandingSettingsService _brandingSettingsService;
-    private readonly HelpArticleService _helpArticleService;
 
-    public SettingsController(BrandingSettingsService brandingSettingsService, HelpArticleService helpArticleService)
+    public SettingsController(BrandingSettingsService brandingSettingsService)
     {
         _brandingSettingsService = brandingSettingsService;
-        _helpArticleService = helpArticleService;
     }
 
     [HttpGet("branding")]
@@ -33,25 +31,5 @@ public class SettingsController : ControllerBase
 
         var updated = _brandingSettingsService.UpdateSettings(settings);
         return Ok(updated);
-    }
-
-    [HttpPost("help-articles")]
-    public IActionResult SaveHelpArticle([FromBody] HelpArticle article)
-    {
-        if (article == null || string.IsNullOrWhiteSpace(article.Title) || string.IsNullOrWhiteSpace(article.Content))
-        {
-            return BadRequest("Article title and content are required.");
-        }
-
-        _helpArticleService.SaveArticle(article);
-
-        return Ok("Article saved successfully.");
-    }
-
-    [HttpGet("help-articles")]
-    public IActionResult GetHelpArticles()
-    {
-        var articles = _helpArticleService.GetAllArticles();
-        return Ok(articles);
     }
 }

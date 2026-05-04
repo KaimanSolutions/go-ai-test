@@ -1,4 +1,5 @@
 using FormBuilder.Backend.Models;
+using System.Text.RegularExpressions;
 
 namespace FormBuilder.Backend.Services;
 
@@ -42,7 +43,7 @@ public sealed class RuleEngineService
                         case "regex":
                             if (value is string stringValue && validator.Value is string pattern)
                             {
-                                if (!System.Text.RegularExpressions.Regex.IsMatch(stringValue, pattern))
+                                if (!Regex.IsMatch(stringValue, pattern))
                                     AddError(field.Name, message ?? $"{field.Label} is invalid.", result);
                             }
                             break;
@@ -117,10 +118,4 @@ public sealed class RuleEngineService
 
         result.Errors[fieldName].Add(message);
     }
-}
-
-public sealed class FormValidationResult
-{
-    public bool IsValid => Errors.Count == 0;
-    public Dictionary<string, List<string>> Errors { get; set; } = new();
 }

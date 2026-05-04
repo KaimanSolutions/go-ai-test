@@ -1,13 +1,23 @@
 using FormBuilder.Backend.Models;
+using FormBuilder.Backend.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormBuilder.Backend.Services;
 
 public sealed class FormSchemaService
 {
-    private readonly Dictionary<string, FormSchema> _schemas = new();
+    private readonly FormBuilderDbContext _context;
 
-    public FormSchemaService()
+    public FormSchemaService(FormBuilderDbContext context)
     {
+        _context = context;
+    }
+
+    public void EnsureSampleData()
+    {
+        if (_context.FormSchemas.Any(s => s.Id == "loan-application"))
+            return;
+
         var sample = new FormSchema
         {
             Id = "loan-application",
@@ -48,13 +58,67 @@ public sealed class FormSchemaService
             }
         };
 
-        _schemas[sample.Id] = sample;
+        _context.FormSchemas.Add(sample);
+        _context.SaveChanges();
     }
 
     public void SaveSchema(FormSchema schema)
     {
-        _schemas[schema.Id] = schema;
+        var existing = LoadFullSchema(schema.Id);
+        if (existing != null)
+        {
+            _context.FormSchemas.Remove(existing);
+            _context.SaveChanges();
+        }
+
+        // Reset all nested IDs so EF generates new ones after the delete
+        foreach (var step in schema.Steps)
+        {
+            step.Id = 0;
+            step.FormSchemaId = schema.Id;
+            foreach (var field in step.Fields)
+            {
+                field.Id = 0;
+                field.FormStepId = null;
+                foreach (var condition in field.Conditions)
+                    condition.Id = 0;
+                foreach (var validator in field.Validators)
+                {
+                    validator.Id = 0;
+                    validator.FormFieldId = null;
+                    foreach (var vc in validator.Conditions)
+                        vc.Id = 0;
+                }
+            }
+        }
+
+        _context.FormSchemas.Add(schema);
+        _context.SaveChanges();
     }
 
-    public IEnumerable<FormSchema> GetAllSchemas() => _schemas.Values;
+    public void DeleteSchema(string id)
+    {
+        var existing = LoadFullSchema(id);
+        if (existing != null)
+        {
+            _context.FormSchemas.Remove(existing);
+            _context.SaveChanges();
+        }
+    }
+
+    public IEnumerable<FormSchema> GetAllSchemas() => LoadQuery().ToList();
+
+    public FormSchema? GetSchema(string id) => LoadQuery().FirstOrDefault(s => s.Id == id);
+
+    private IQueryable<FormSchema> LoadQuery() =>
+        _context.FormSchemas
+            .Include(s => s.Steps)
+                .ThenInclude(s => s.Fields)
+                    .ThenInclude(f => f.Conditions)
+            .Include(s => s.Steps)
+                .ThenInclude(s => s.Fields)
+                    .ThenInclude(f => f.Validators)
+                        .ThenInclude(v => v.Conditions);
+
+    private FormSchema? LoadFullSchema(string id) => LoadQuery().FirstOrDefault(s => s.Id == id);
 }

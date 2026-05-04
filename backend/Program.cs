@@ -1,22 +1,34 @@
 using FormBuilder.Backend.Services;
+using FormBuilder.Backend.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add DbContext
+builder.Services.AddDbContext<FormBuilderDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sql => sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<FormSchemaService>();
-builder.Services.AddSingleton<RuleEngineService>();
-builder.Services.AddSingleton<JwtAuthService>();
-builder.Services.AddSingleton<ExternalAuthService>();
-builder.Services.AddSingleton<BrandingSettingsService>();
+builder.Services.AddScoped<FormSchemaService>();
+builder.Services.AddScoped<RuleEngineService>();
+builder.Services.AddScoped<JwtAuthService>();
+builder.Services.AddScoped<ExternalAuthService>();
+builder.Services.AddScoped<BrandingSettingsService>();
+builder.Services.AddScoped<HelpArticleService>();
+builder.Services.AddScoped<ProfileSettingsService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secret = jwtSettings["Secret"] ?? string.Empty;
+var issuer = jwtSettings["Issuer"] ?? string.Empty;
+var audience = jwtSettings["Audience"] ?? string.Empty;
 
 builder.Services.AddAuthentication(options =>
 {
@@ -31,18 +43,18 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
+        ValidIssuer = issuer,
+        ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret))
     };
 })
 .AddOpenIdConnect("SSO", options =>
 {
     var oidcSettings = builder.Configuration.GetSection("OpenIdConnect");
-    options.Authority = oidcSettings["Authority"];
-    options.ClientId = oidcSettings["ClientId"];
-    options.ClientSecret = oidcSettings["ClientSecret"];
-    options.ResponseType = oidcSettings["ResponseType"];
+    options.Authority = oidcSettings["Authority"] ?? string.Empty;
+    options.ClientId = oidcSettings["ClientId"] ?? string.Empty;
+    options.ClientSecret = oidcSettings["ClientSecret"] ?? string.Empty;
+    options.ResponseType = oidcSettings["ResponseType"] ?? string.Empty;
     options.Scope.Clear();
     foreach (var scope in oidcSettings["Scope"]?.Split(' ') ?? Array.Empty<string>())
     {
@@ -65,13 +77,24 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var db = scope.ServiceProvider.GetRequiredService<FormBuilderDbContext>();
+    db.Database.Migrate();
+
+    var brandingService = scope.ServiceProvider.GetRequiredService<BrandingSettingsService>();
+    brandingService.EnsureDefaultSettings();
+
+    var formService = scope.ServiceProvider.GetRequiredService<FormSchemaService>();
+    formService.EnsureSampleData();
+
+    var profileService = scope.ServiceProvider.GetRequiredService<ProfileSettingsService>();
+    profileService.EnsureDefaultProfile();
 }
 
-app.UseHttpsRedirection();
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

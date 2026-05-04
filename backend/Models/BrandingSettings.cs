@@ -2,6 +2,7 @@ namespace FormBuilder.Backend.Models;
 
 public sealed class BrandingSettings
 {
+    public int Id { get; set; }
     public string PrimaryColor { get; set; } = "#0ea5e9";
     public string AccentColor { get; set; } = "#7c3aed";
     public string BackgroundColor { get; set; } = "#0f172a";

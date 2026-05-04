@@ -1,20 +1,49 @@
 using FormBuilder.Backend.Models;
-using System.Collections.Generic;
+using FormBuilder.Backend.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormBuilder.Backend.Services;
 
 public class HelpArticleService
 {
-    private readonly List<HelpArticle> _articles = new(); // Replace with actual database logic
+    private readonly FormBuilderDbContext _context;
+
+    public HelpArticleService(FormBuilderDbContext context)
+    {
+        _context = context;
+    }
 
     public void SaveArticle(HelpArticle article)
     {
-        article.Id = _articles.Count + 1;
-        _articles.Add(article);
+        if (article.Id == 0)
+        {
+            _context.HelpArticles.Add(article);
+        }
+        else
+        {
+            _context.HelpArticles.Update(article);
+        }
+
+        _context.SaveChanges();
     }
 
     public List<HelpArticle> GetAllArticles()
     {
-        return _articles;
+        return _context.HelpArticles.OrderByDescending(a => a.CreatedAt).ToList();
+    }
+
+    public HelpArticle? GetArticleById(int id)
+    {
+        return _context.HelpArticles.FirstOrDefault(a => a.Id == id);
+    }
+
+    public void DeleteArticle(int id)
+    {
+        var article = _context.HelpArticles.FirstOrDefault(a => a.Id == id);
+        if (article != null)
+        {
+            _context.HelpArticles.Remove(article);
+            _context.SaveChanges();
+        }
     }
 }

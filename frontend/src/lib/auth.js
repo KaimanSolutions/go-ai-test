@@ -19,8 +19,8 @@ export async function login(username, password) {
   }
 }
 
-export async function startSSO() {
-  const url = `${API_BASE}/auth/sso`;
+export async function startSSO(provider = 'generic') {
+  const url = `${API_BASE}/auth/sso?provider=${encodeURIComponent(provider)}`;
   window.location.href = url;
 }
 
@@ -121,6 +121,59 @@ export async function validateSubmission(schema, values) {
     }
 
     return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function fetchUserProfile(token) {
+  try {
+    const response = await fetch(`${API_BASE}/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to fetch profile.' };
+    }
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function saveUserProfile(profile, token) {
+  try {
+    const response = await fetch(`${API_BASE}/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(profile)
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to save profile.' };
+    }
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function deleteSchema(id, token) {
+  try {
+    const response = await fetch(`${API_BASE}/formbuilder/schema/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to delete schema.' };
+    }
+
+    return {};
   } catch (error) {
     return { error: error.message };
   }
