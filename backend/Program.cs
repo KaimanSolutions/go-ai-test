@@ -1,4 +1,4 @@
-using FormBuilder.Backend.Services;
+using FormBuilder.Backend;
 using FormBuilder.Backend.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +13,10 @@ builder.Services.AddDbContext<FormBuilderDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         sql => sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -24,6 +27,15 @@ builder.Services.AddScoped<ExternalAuthService>();
 builder.Services.AddScoped<BrandingSettingsService>();
 builder.Services.AddScoped<HelpArticleService>();
 builder.Services.AddScoped<ProfileSettingsService>();
+builder.Services.AddScoped<UserAccountService>();
+builder.Services.AddScoped<CompanyService>();
+builder.Services.AddScoped<IntegrationSettingsService>();
+builder.Services.AddScoped<WorkflowService>();
+builder.Services.AddTransient<ApiLoggingHandler>();
+builder.Services.AddHttpClient<EpcService>()
+    .AddHttpMessageHandler<ApiLoggingHandler>();
+builder.Services.AddHttpClient<FcaLookupService>()
+    .AddHttpMessageHandler<ApiLoggingHandler>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secret = jwtSettings["Secret"] ?? string.Empty;

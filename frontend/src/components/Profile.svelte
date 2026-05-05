@@ -51,8 +51,9 @@
     <p class="mt-1 text-sm text-slate-400">Read-only details from your login.</p>
     <div class="mt-5 grid gap-4 sm:grid-cols-2">
       <div>
-        <label class="block text-sm font-medium text-slate-400">Username</label>
+        <label for="profile-username" class="block text-sm font-medium text-slate-400">Username</label>
         <input
+          id="profile-username"
           type="text"
           value={user?.userName}
           disabled
@@ -60,8 +61,9 @@
         />
       </div>
       <div>
-        <label class="block text-sm font-medium text-slate-400">Email</label>
+        <label for="profile-email" class="block text-sm font-medium text-slate-400">Email</label>
         <input
+          id="profile-email"
           type="text"
           value={user?.email}
           disabled
