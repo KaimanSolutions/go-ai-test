@@ -283,7 +283,7 @@
             class="w-full rounded-2xl border border-slate-700 bg-slate-900 py-2.5 pl-9 pr-4 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"
           />
           {#if searchQuery}
-            <button onclick={() => searchQuery = ''} class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+            <button aria-label="Clear search" onclick={() => searchQuery = ''} class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
               <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
             </button>
           {/if}
@@ -402,26 +402,26 @@
           <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Rule identity</p>
           <div class="grid gap-4 sm:grid-cols-2">
             <div>
-              <label class={lbl}>Rule reference *</label>
-              <input type="text" bind:value={ref} placeholder="e.g. BR-001" class={ic} />
+              <label for="rl-ref" class={lbl}>Rule reference *</label>
+              <input id="rl-ref" type="text" bind:value={ref} placeholder="e.g. BR-001" class={ic} />
             </div>
             <div>
-              <label class={lbl}>Rule name *</label>
-              <input type="text" bind:value={name} placeholder="e.g. Maximum LTV Check" class={ic} />
+              <label for="rl-name" class={lbl}>Rule name *</label>
+              <input id="rl-name" type="text" bind:value={name} placeholder="e.g. Maximum LTV Check" class={ic} />
             </div>
           </div>
           <div class="mt-4">
-            <label class={lbl}>Internal description</label>
-            <textarea bind:value={description} rows="2" placeholder="Internal notes…" class="{ic} resize-none"></textarea>
+            <label for="rl-desc" class={lbl}>Internal description</label>
+            <textarea id="rl-desc" bind:value={description} rows="2" placeholder="Internal notes…" class="{ic} resize-none"></textarea>
           </div>
           <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-              <label class={lbl}>Client-facing description</label>
-              <textarea bind:value={clientDesc} rows="2" placeholder="Shown to clients when rule fails…" class="{ic} resize-none"></textarea>
+              <label for="rl-cdesc" class={lbl}>Client-facing description</label>
+              <textarea id="rl-cdesc" bind:value={clientDesc} rows="2" placeholder="Shown to clients when rule fails…" class="{ic} resize-none"></textarea>
             </div>
             <div>
-              <label class={lbl}>Broker-facing description</label>
-              <textarea bind:value={brokerDesc} rows="2" placeholder="Shown to brokers when rule fails…" class="{ic} resize-none"></textarea>
+              <label for="rl-bdesc" class={lbl}>Broker-facing description</label>
+              <textarea id="rl-bdesc" bind:value={brokerDesc} rows="2" placeholder="Shown to brokers when rule fails…" class="{ic} resize-none"></textarea>
             </div>
           </div>
         </div>
@@ -481,7 +481,7 @@
 
                       <!-- Left side -->
                       <div class="flex-1 min-w-[160px]">
-                        <label class="mb-1 block text-xs text-slate-500">Left side</label>
+                        <label for="rl-left-{gi}-{ci}" class="mb-1 block text-xs text-slate-500">Left side</label>
                         <div class="space-y-1">
                           <!-- Type toggle -->
                           <div class="flex rounded-lg overflow-hidden border border-slate-700 text-xs">
@@ -497,6 +497,7 @@
                           <!-- Input -->
                           {#if cond.leftType === 'field'}
                             <select
+                              id="rl-left-{gi}-{ci}"
                               value={cond.leftValue}
                               onchange={e => patchCond(gi, ci, 'leftValue', e.target.value)}
                               class="{ic2} w-full"
@@ -508,6 +509,7 @@
                             </select>
                           {:else}
                             <input
+                              id="rl-left-{gi}-{ci}"
                               type="text"
                               value={cond.leftValue}
                               oninput={e => patchCond(gi, ci, 'leftValue', e.target.value)}
@@ -520,8 +522,9 @@
 
                       <!-- Operator -->
                       <div class="w-20 shrink-0">
-                        <label class="mb-1 block text-xs text-slate-500">Op</label>
+                        <label for="rl-op-{gi}-{ci}" class="mb-1 block text-xs text-slate-500">Op</label>
                         <select
+                          id="rl-op-{gi}-{ci}"
                           value={cond.operator}
                           onchange={e => patchCond(gi, ci, 'operator', e.target.value)}
                           class="{ic2} w-full"
@@ -534,7 +537,7 @@
 
                       <!-- Right side -->
                       <div class="flex-1 min-w-[160px]">
-                        <label class="mb-1 block text-xs text-slate-500">Right side</label>
+                        <label for="rl-right-{gi}-{ci}" class="mb-1 block text-xs text-slate-500">Right side</label>
                         <div class="space-y-1">
                           <!-- Type toggle -->
                           <div class="flex rounded-lg overflow-hidden border border-slate-700 text-xs">
@@ -550,6 +553,7 @@
                           <!-- Input -->
                           {#if cond.rightType === 'field'}
                             <select
+                              id="rl-right-{gi}-{ci}"
                               value={cond.rightValue}
                               onchange={e => patchCond(gi, ci, 'rightValue', e.target.value)}
                               class="{ic2} w-full"
@@ -561,6 +565,7 @@
                             </select>
                           {:else}
                             <input
+                              id="rl-right-{gi}-{ci}"
                               type="text"
                               value={cond.rightValue}
                               oninput={e => patchCond(gi, ci, 'rightValue', e.target.value)}
@@ -636,8 +641,8 @@
           <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Settings</p>
 
           <div class="mb-4">
-            <label class={lbl}>Form *</label>
-            <select bind:value={formSchemaId} class={ic}>
+            <label for="rl-form" class={lbl}>Form *</label>
+            <select id="rl-form" bind:value={formSchemaId} class={ic}>
               <option value="">Select a form…</option>
               {#each schemas as s}
                 <option value={s.id}>{s.title}</option>

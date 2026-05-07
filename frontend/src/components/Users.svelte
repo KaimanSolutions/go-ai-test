@@ -142,13 +142,16 @@
 <!-- ── Modal ─────────────────────────────────────────────────────────────────── -->
 {#if showModal}
   <div
+    role="presentation"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
     onclick={(e) => { if (e.target === e.currentTarget) showModal = false; }}
+    onkeydown={() => {}}
   >
     <div class="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
       <div class="flex items-center justify-between">
         <h3 class="text-base font-semibold text-white">Add user</h3>
         <button
+          aria-label="Close"
           onclick={() => showModal = false}
           class="flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-800 hover:text-white"
         >
@@ -165,7 +168,7 @@
       <div class="mt-5 space-y-4">
         <!-- Role -->
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1.5">Role</label>
+          <p class="block text-xs font-medium text-slate-400 mb-1.5">Role</p>
           <div class="grid grid-cols-3 gap-2">
             {#each ['Admin', 'Broker', 'Client'] as r}
               <button
@@ -184,43 +187,43 @@
         <!-- Name row -->
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">First name <span class="text-red-400">*</span></label>
-            <input bind:value={form.firstName} placeholder="Jane"
+            <label for="u-firstname" class="block text-xs font-medium text-slate-400 mb-1.5">First name <span class="text-red-400">*</span></label>
+            <input id="u-firstname" bind:value={form.firstName} placeholder="Jane"
               class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Last name <span class="text-red-400">*</span></label>
-            <input bind:value={form.lastName} placeholder="Smith"
+            <label for="u-lastname" class="block text-xs font-medium text-slate-400 mb-1.5">Last name <span class="text-red-400">*</span></label>
+            <input id="u-lastname" bind:value={form.lastName} placeholder="Smith"
               class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none" />
           </div>
         </div>
 
         <!-- Email -->
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1.5">Email <span class="text-red-400">*</span></label>
-          <input bind:value={form.email} type="email" placeholder="jane@example.com"
+          <label for="u-email" class="block text-xs font-medium text-slate-400 mb-1.5">Email <span class="text-red-400">*</span></label>
+          <input id="u-email" bind:value={form.email} type="email" placeholder="jane@example.com"
             class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none" />
         </div>
 
         <!-- Password -->
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1.5">Password <span class="text-red-400">*</span></label>
-          <input bind:value={form.password} type="password" placeholder="Min. 8 characters"
+          <label for="u-password" class="block text-xs font-medium text-slate-400 mb-1.5">Password <span class="text-red-400">*</span></label>
+          <input id="u-password" bind:value={form.password} type="password" placeholder="Min. 8 characters"
             class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none" />
         </div>
 
         <!-- Phone -->
         <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1.5">Phone</label>
-          <input bind:value={form.phone} type="tel" placeholder="+44 7700 900000"
+          <label for="u-phone" class="block text-xs font-medium text-slate-400 mb-1.5">Phone</label>
+          <input id="u-phone" bind:value={form.phone} type="tel" placeholder="+44 7700 900000"
             class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none" />
         </div>
 
         <!-- Company (Broker only) -->
         {#if form.role === 'Broker'}
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Company <span class="text-red-400">*</span></label>
-            <select bind:value={form.companyId}
+            <label for="u-company" class="block text-xs font-medium text-slate-400 mb-1.5">Company <span class="text-red-400">*</span></label>
+            <select id="u-company" bind:value={form.companyId}
               class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white focus:border-sky-500 focus:outline-none">
               <option value="">Select company…</option>
               {#each companies as c}
@@ -229,8 +232,8 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1.5">Licence number</label>
-            <input bind:value={form.licenseNumber} placeholder="Optional"
+            <label for="u-licence" class="block text-xs font-medium text-slate-400 mb-1.5">Licence number</label>
+            <input id="u-licence" bind:value={form.licenseNumber} placeholder="Optional"
               class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none" />
           </div>
         {/if}
@@ -254,8 +257,10 @@
 <!-- ── User detail panel ─────────────────────────────────────────────────────── -->
 {#if detailUser || detailLoading}
   <div
+    role="presentation"
     class="fixed inset-0 z-40 flex justify-end bg-black/50 backdrop-blur-sm"
     onclick={(e) => { if (e.target === e.currentTarget) detailUser = null; }}
+    onkeydown={() => {}}
   >
     <div class="flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-slate-700 bg-slate-900 shadow-2xl">
 
@@ -263,6 +268,7 @@
       <div class="flex shrink-0 items-center justify-between border-b border-slate-800 px-6 py-5">
         <h3 class="text-base font-semibold text-white">User details</h3>
         <button
+          aria-label="Close"
           onclick={() => detailUser = null}
           class="flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-800 hover:text-white"
         >
@@ -437,7 +443,7 @@
         class="w-full rounded-2xl border border-slate-800 bg-slate-950/60 py-2.5 pl-10 pr-4 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
       />
       {#if search}
-        <button onclick={() => search = ''} class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition">
+        <button aria-label="Clear search" onclick={() => search = ''} class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition">
           <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
             <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
           </svg>

@@ -396,6 +396,7 @@
           <div class="flex items-center">
             {#if stages.length > 0}<div class="mt-4 px-1 text-slate-700"><svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/></svg></div>{/if}
             <button
+              aria-label="Add stage"
               onclick={addStage}
               class="mt-0 flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-slate-600 text-slate-500 transition hover:border-sky-500 hover:text-sky-400"
             >
@@ -428,15 +429,15 @@
               {selectedId === s._id ? 'bg-sky-500/20 text-sky-400' : ''}">{i + 1}</span>
             <span class="flex-1 truncate text-sm {!s.name ? 'italic text-slate-500' : ''}">{s.name || 'Unnamed stage'}</span>
             <div class="hidden shrink-0 items-center gap-0.5 group-hover:flex">
-              <button onclick={(e) => { e.stopPropagation(); moveStage(s._id, -1); }} disabled={i === 0}
+              <button aria-label="Move stage up" onclick={(e) => { e.stopPropagation(); moveStage(s._id, -1); }} disabled={i === 0}
                 class="rounded p-0.5 text-slate-500 hover:text-slate-200 disabled:opacity-30">
                 <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M14.77 12.79a.75.75 0 01-1.06-.02L10 8.832 6.29 12.77a.75.75 0 11-1.08-1.04l4.25-4.5a.75.75 0 011.08 0l4.25 4.5a.75.75 0 01-.02 1.06z" clip-rule="evenodd"/></svg>
               </button>
-              <button onclick={(e) => { e.stopPropagation(); moveStage(s._id, 1); }} disabled={i === stages.length - 1}
+              <button aria-label="Move stage down" onclick={(e) => { e.stopPropagation(); moveStage(s._id, 1); }} disabled={i === stages.length - 1}
                 class="rounded p-0.5 text-slate-500 hover:text-slate-200 disabled:opacity-30">
                 <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
               </button>
-              <button onclick={(e) => { e.stopPropagation(); removeStage(s._id); }}
+              <button aria-label="Remove stage" onclick={(e) => { e.stopPropagation(); removeStage(s._id); }}
                 class="rounded p-0.5 text-slate-600 hover:text-red-400">
                 <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
               </button>
@@ -461,8 +462,9 @@
           <!-- Stage name + toggles -->
           <div class="space-y-3">
             <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Stage name</label>
+              <label for="wf-stage-name" class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Stage name</label>
               <input
+                id="wf-stage-name"
                 type="text"
                 placeholder="e.g. Initial Assessment"
                 value={selectedStage.name}
@@ -471,8 +473,9 @@
               />
             </div>
             <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Description</label>
+              <label for="wf-stage-desc" class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Description</label>
               <input
+                id="wf-stage-desc"
                 type="text"
                 placeholder="Optional description…"
                 value={selectedStage.description}
@@ -540,7 +543,7 @@
                         </div>
                         <span class="text-xs text-slate-500">Required</span>
                       </label>
-                      <button onclick={() => removeTask(task._id)} class="text-slate-600 transition hover:text-red-400">
+                      <button aria-label="Remove task" onclick={() => removeTask(task._id)} class="text-slate-600 transition hover:text-red-400">
                         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
                       </button>
                     </div>
@@ -588,7 +591,7 @@
                           <option value={s._id}>{s.name || 'Unnamed stage'}</option>
                         {/each}
                       </select>
-                      <button onclick={() => removeTransition(tr._id)} class="text-slate-600 transition hover:text-red-400">
+                      <button aria-label="Remove path" onclick={() => removeTransition(tr._id)} class="text-slate-600 transition hover:text-red-400">
                         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
                       </button>
                     </div>

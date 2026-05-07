@@ -203,7 +203,7 @@
                   <p class="text-sm font-semibold text-white">{selectedCompany.name}</p>
                   <p class="mt-0.5 font-mono text-xs text-emerald-400">{selectedCompany.fcaNumber}</p>
                 </div>
-                <button type="button" onclick={clearCompany}
+                <button type="button" aria-label="Clear company" onclick={clearCompany}
                   class="ml-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-700 hover:text-white">
                   <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>

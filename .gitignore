@@ -7,3 +7,4 @@ node_modules/
 *.suo
 *.userprefs
 .vscode/
+.claude

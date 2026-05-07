@@ -118,6 +118,44 @@ public sealed class ChecklistService(FormBuilderDbContext context)
             }).ToList();
     }
 
+    public IEnumerable<object> GetMyActionItems(string userEmail, string role)
+    {
+        var user = context.UserAccounts.FirstOrDefault(u => u.Email == userEmail);
+        if (user is null) return [];
+
+        var apps = context.Applications
+            .Where(a => a.SubmittedAt != null &&
+                (role == UserRoles.Client ? a.ClientId == user.Id : a.BrokerId == user.Id))
+            .Select(a => new { a.Id, a.PublicReference })
+            .ToList();
+
+        if (apps.Count == 0) return [];
+
+        var appIds  = apps.Select(a => a.Id).ToList();
+        var appRefs = apps.ToDictionary(a => a.Id, a => a.PublicReference);
+
+        var items = context.ApplicationChecklistItems
+            .Include(i => i.ChecklistItem)
+            .Where(i => appIds.Contains(i.ApplicationId)
+                && (i.Status == "Outstanding" || i.Status == "More Info Needed")
+                && (role == UserRoles.Client ? i.ChecklistItem.IsClientVisible : i.ChecklistItem.IsBrokerVisible))
+            .OrderBy(i => i.ApplicationId)
+            .ThenBy(i => i.ChecklistItem.Name)
+            .ToList();
+
+        return items.Select(i => (object)new
+        {
+            i.Id,
+            i.ApplicationId,
+            ApplicationReference = appRefs.GetValueOrDefault(i.ApplicationId),
+            i.Status,
+            ItemName        = i.ChecklistItem.Name,
+            ItemDescription = i.ChecklistItem.Description,
+            ItemType        = i.ChecklistItem.ItemType,
+            i.GeneratedAt,
+        });
+    }
+
     public (bool Success, string Error) GenerateForApplication(int applicationId)
     {
         var app = context.Applications.FirstOrDefault(a => a.Id == applicationId);

@@ -258,17 +258,17 @@
           <h3 class="mb-4 text-sm font-semibold text-white">Details</h3>
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="sm:col-span-2">
-              <label class="mb-1.5 block text-xs font-medium text-slate-400">Name *</label>
-              <input class={ic} bind:value={name} placeholder="e.g. Application Received" />
+              <label for="tmpl-name" class="mb-1.5 block text-xs font-medium text-slate-400">Name *</label>
+              <input id="tmpl-name" class={ic} bind:value={name} placeholder="e.g. Application Received" />
             </div>
             <div class="sm:col-span-2">
-              <label class="mb-1.5 block text-xs font-medium text-slate-400">Description</label>
-              <input class={ic} bind:value={description} placeholder="Internal notes about this template" />
+              <label for="tmpl-desc" class="mb-1.5 block text-xs font-medium text-slate-400">Description</label>
+              <input id="tmpl-desc" class={ic} bind:value={description} placeholder="Internal notes about this template" />
             </div>
             {#if activeTab === 'Email'}
               <div class="sm:col-span-2">
-                <label class="mb-1.5 block text-xs font-medium text-slate-400">Subject line</label>
-                <input class={ic} bind:value={subject} placeholder="e.g. Your application {{reference}} has been received" />
+                <label for="tmpl-subject" class="mb-1.5 block text-xs font-medium text-slate-400">Subject line</label>
+                <input id="tmpl-subject" class={ic} bind:value={subject} placeholder="e.g. Your application {{reference}} has been received" />
               </div>
             {/if}
             <div class="flex items-center gap-3">

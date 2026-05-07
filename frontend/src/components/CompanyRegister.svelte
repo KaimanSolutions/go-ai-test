@@ -169,9 +169,10 @@
 
   <!-- FCA lookup -->
   <div class="space-y-2">
-    <label class="block text-sm font-medium text-slate-300">FCA reference number *</label>
+    <label for="cr-fca" class="block text-sm font-medium text-slate-300">FCA reference number *</label>
     <div class="flex gap-2">
       <input
+        id="cr-fca"
         type="text"
         class="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
         bind:value={compFCA}
@@ -212,13 +213,13 @@
   <!-- Company details -->
   <div class="space-y-3">
     <div>
-      <label class="block text-sm font-medium text-slate-300">Company name *</label>
-      <input type="text" class="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" bind:value={compName} placeholder="Acme Mortgages Ltd" />
+      <label for="cr-name" class="block text-sm font-medium text-slate-300">Company name *</label>
+      <input id="cr-name" type="text" class="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" bind:value={compName} placeholder="Acme Mortgages Ltd" />
     </div>
 
     <!-- FCA status display -->
     <div>
-      <label class="block text-sm font-medium text-slate-300">FCA status</label>
+      <p class="block text-sm font-medium text-slate-300">FCA status</p>
       {#if compFcaStatus}
         <div class="mt-1.5 flex items-center gap-2 rounded-xl border border-slate-700/60 bg-slate-900/60 px-3 py-2.5">
           <span class="inline-block h-2 w-2 shrink-0 rounded-full {compFcaStatus.toLowerCase() === 'authorised' ? 'bg-emerald-400' : 'bg-amber-400'}"></span>
@@ -271,17 +272,17 @@
 
     <div class="grid grid-cols-2 gap-3">
       <div>
-        <label class="block text-sm font-medium text-slate-300">Phone</label>
-        <input type="tel" class="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" bind:value={compPhone} placeholder="+44 20 0000 0000" />
+        <label for="cr-phone" class="block text-sm font-medium text-slate-300">Phone</label>
+        <input id="cr-phone" type="tel" class="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" bind:value={compPhone} placeholder="+44 20 0000 0000" />
       </div>
       <div>
-        <label class="block text-sm font-medium text-slate-300">Email *</label>
-        <input type="email" class="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" bind:value={compEmail} placeholder="info@company.com" />
+        <label for="cr-email" class="block text-sm font-medium text-slate-300">Email *</label>
+        <input id="cr-email" type="email" class="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" bind:value={compEmail} placeholder="info@company.com" />
       </div>
     </div>
     <div>
-      <label class="block text-sm font-medium text-slate-300">Website</label>
-      <input type="text" class="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" bind:value={compWebsite} placeholder="https://company.com" />
+      <label for="cr-website" class="block text-sm font-medium text-slate-300">Website</label>
+      <input id="cr-website" type="text" class="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" bind:value={compWebsite} placeholder="https://company.com" />
     </div>
   </div>
 

@@ -39,6 +39,8 @@ builder.Services.AddSingleton<ExpressionEvaluator>();
 builder.Services.AddScoped<BusinessRuleService>();
 builder.Services.AddScoped<ChecklistService>();
 builder.Services.AddScoped<TemplateService>();
+builder.Services.AddScoped<NoteService>();
+builder.Services.AddScoped<LoginEventService>();
 builder.Services.AddTransient<ApiLoggingHandler>();
 builder.Services.AddHttpClient<EpcService>()
     .AddHttpMessageHandler<ApiLoggingHandler>();

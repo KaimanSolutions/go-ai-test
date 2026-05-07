@@ -223,7 +223,7 @@
           <div>
             <label for="article-content" class="block text-sm font-semibold text-white">Content (Markdown)</label>
             <textarea id="article-content" placeholder="Write your article in Markdown..." bind:value={editorState.content}
-              class="mt-2 h-72 w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 font-mono text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200" />
+              class="mt-2 h-72 w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 font-mono text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"></textarea>
           </div>
 
           <div class="flex gap-3">

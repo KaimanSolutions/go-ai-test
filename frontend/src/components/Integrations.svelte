@@ -323,8 +323,9 @@
         <p class="mt-0.5 text-sm text-slate-400">Outbound requests made to third-party integrations.</p>
       </div>
       <div class="flex items-center gap-2">
-        <label class="text-xs font-medium text-slate-400">Integration</label>
+        <label for="int-filter" class="text-xs font-medium text-slate-400">Integration</label>
         <select
+          id="int-filter"
           class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-500"
           bind:value={selectedInt}
           onchange={() => loadLogs(1)}
@@ -402,11 +403,11 @@
 
 <!-- Detail drawer -->
 {#if detail || detailLoading}
-  <div class="fixed inset-0 z-50 flex items-start justify-end bg-black/50 backdrop-blur-sm" onclick={closeDetail}>
-    <div class="relative flex h-full w-full max-w-2xl flex-col overflow-y-auto bg-slate-900 shadow-2xl" onclick={(e) => e.stopPropagation()}>
+  <div role="presentation" class="fixed inset-0 z-50 flex items-start justify-end bg-black/50 backdrop-blur-sm" onclick={closeDetail} onkeydown={() => {}}>
+    <div role="presentation" class="relative flex h-full w-full max-w-2xl flex-col overflow-y-auto bg-slate-900 shadow-2xl" onclick={(e) => e.stopPropagation()} onkeydown={() => {}}>
       <div class="flex items-center justify-between border-b border-slate-800 px-6 py-4">
         <h4 class="text-base font-semibold text-white">Request Detail</h4>
-        <button onclick={closeDetail} class="text-slate-400 transition hover:text-white">
+        <button aria-label="Close" onclick={closeDetail} class="text-slate-400 transition hover:text-white">
           <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
           </svg>

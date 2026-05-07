@@ -890,3 +890,76 @@ export async function fetchRuleOutcomes(applicationId, token) {
     return res.ok ? await res.json() : { error: await res.text() };
   } catch (e) { return { error: e.message }; }
 }
+
+export async function fetchNotes(applicationId, token) {
+  try {
+    const res = await fetch(`${API_BASE}/notes/application/${applicationId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok ? await res.json() : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function addNote(applicationId, data, token) {
+  try {
+    const res = await fetch(`${API_BASE}/notes/application/${applicationId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    return res.ok ? await res.json() : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function fetchLoginEvents(token, { page = 1, pageSize = 50, userType = '', deviceType = '', authMethod = '', from = '', to = '' } = {}) {
+  try {
+    const params = new URLSearchParams({ page, pageSize });
+    if (userType)   params.set('userType',   userType);
+    if (deviceType) params.set('deviceType', deviceType);
+    if (authMethod) params.set('authMethod', authMethod);
+    if (from)       params.set('from', from);
+    if (to)         params.set('to',   to);
+    const res = await fetch(`${API_BASE}/login-events?${params}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok ? await res.json() : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function fetchLoginEventSummary(token) {
+  try {
+    const res = await fetch(`${API_BASE}/login-events/summary`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok ? await res.json() : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function fetchMyChecklistActionItems(token) {
+  try {
+    const res = await fetch(`${API_BASE}/checklist/my/action-items`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok ? await res.json() : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function fetchMyRecentNotes(token) {
+  try {
+    const res = await fetch(`${API_BASE}/notes/my/recent`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok ? await res.json() : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function updateNoteVisibility(noteId, isClientVisible, isBrokerVisible, token) {
+  try {
+    const res = await fetch(`${API_BASE}/notes/${noteId}/visibility`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ isClientVisible, isBrokerVisible })
+    });
+    return res.ok ? {} : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}

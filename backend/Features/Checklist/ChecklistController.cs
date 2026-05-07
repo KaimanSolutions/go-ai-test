@@ -109,8 +109,22 @@ public sealed class ChecklistController(ChecklistService service) : ControllerBa
         return File(stream, item.DocumentContentType ?? "application/octet-stream", item.DocumentName ?? "document");
     }
 
+    [HttpGet("my/action-items")]
+    public IActionResult GetMyActionItems()
+    {
+        var email = CurrentUserEmail;
+        if (string.IsNullOrEmpty(email)) return Unauthorized();
+        return Ok(service.GetMyActionItems(email, CurrentUserRole));
+    }
+
     private string CurrentUserRole =>
         User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
         ?? User.FindFirst("role")?.Value
+        ?? string.Empty;
+
+    private string CurrentUserEmail =>
+        User.Claims.FirstOrDefault(c =>
+            c.Type == System.Security.Claims.ClaimTypes.Email ||
+            c.Type == System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email)?.Value
         ?? string.Empty;
 }

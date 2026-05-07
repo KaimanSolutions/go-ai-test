@@ -55,13 +55,13 @@
     <p class="mt-1 text-sm text-slate-400">Read-only details from your login.</p>
     <div class="mt-5 grid gap-4 sm:grid-cols-2">
       <div>
-        <label class="block text-sm font-medium text-slate-400">Email</label>
-        <input type="text" value={user?.email} disabled
+        <label for="prof-email" class="block text-sm font-medium text-slate-400">Email</label>
+        <input id="prof-email" type="text" value={user?.email} disabled
           class="mt-1.5 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-slate-500 cursor-not-allowed" />
       </div>
       <div>
-        <label class="block text-sm font-medium text-slate-400">Role</label>
-        <input type="text" value={user?.role} disabled
+        <label for="prof-role" class="block text-sm font-medium text-slate-400">Role</label>
+        <input id="prof-role" type="text" value={user?.role} disabled
           class="mt-1.5 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-slate-500 cursor-not-allowed" />
       </div>
     </div>

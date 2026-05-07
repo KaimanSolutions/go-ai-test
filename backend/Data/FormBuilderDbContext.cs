@@ -36,6 +36,8 @@ public sealed class FormBuilderDbContext : DbContext
     public DbSet<ApplicationChecklistItem>   ApplicationChecklistItems   { get; set; }
     public DbSet<ApplicationChecklistComment> ApplicationChecklistComments { get; set; }
     public DbSet<Template>                   Templates                   { get; set; }
+    public DbSet<ApplicationNote>            ApplicationNotes            { get; set; }
+    public DbSet<LoginEvent>                 LoginEvents                 { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -350,5 +352,30 @@ public sealed class FormBuilderDbContext : DbContext
         modelBuilder.Entity<Template>()
             .Property(t => t.TemplateType)
             .HasMaxLength(20);
+
+        modelBuilder.Entity<ApplicationNote>()
+            .HasKey(n => n.Id);
+
+        modelBuilder.Entity<ApplicationNote>()
+            .HasOne<Application>()
+            .WithMany()
+            .HasForeignKey(n => n.ApplicationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ApplicationNote>()
+            .Property(n => n.AuthorRole)
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<LoginEvent>()
+            .HasKey(e => e.Id);
+
+        modelBuilder.Entity<LoginEvent>()
+            .Property(e => e.UserType).HasMaxLength(30);
+
+        modelBuilder.Entity<LoginEvent>()
+            .Property(e => e.DeviceType).HasMaxLength(20);
+
+        modelBuilder.Entity<LoginEvent>()
+            .Property(e => e.AuthMethod).HasMaxLength(20);
     }
 }

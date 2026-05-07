@@ -323,7 +323,7 @@
   {@const previewTotalSteps  = previewSchemaSteps.length}
   {@const previewCurrentStep = previewSchemaSteps[previewStep]}
 
-  <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm" onclick={(e) => { if (e.target === e.currentTarget) showPreview = false; }}>
+  <div role="presentation" class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm" onclick={(e) => { if (e.target === e.currentTarget) showPreview = false; }} onkeydown={() => {}}>
     <div class="my-8 w-full max-w-2xl rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl">
 
       <!-- Preview header -->
@@ -332,7 +332,7 @@
           <p class="text-xs font-semibold uppercase tracking-wider text-sky-400">Live Preview</p>
           <h3 class="mt-0.5 text-base font-semibold text-white">{currentSchema.title || 'Untitled form'}</h3>
         </div>
-        <button onclick={() => showPreview = false}
+        <button aria-label="Close preview" onclick={() => showPreview = false}
           class="flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-800 hover:text-white">
           <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
             <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
@@ -380,12 +380,12 @@
 
               {:else}
                 <div>
-                  <label class="mb-1.5 block text-sm font-medium text-white">
+                  <label for="prev-{field.name}" class="mb-1.5 block text-sm font-medium text-white">
                     {field.label}{#if field.required}<span class="ml-0.5 text-red-400">*</span>{/if}
                   </label>
 
                   {#if field.type === 'select'}
-                    <select value={previewValues[field.name] ?? ''} onchange={(e) => previewValues = { ...previewValues, [field.name]: e.target.value }}
+                    <select id="prev-{field.name}" value={previewValues[field.name] ?? ''} onchange={(e) => previewValues = { ...previewValues, [field.name]: e.target.value }}
                       class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white focus:border-sky-500 focus:outline-none">
                       <option value="">Select…</option>
                       {#each (Array.isArray(field.options) ? field.options : (field.options ?? '').split(',').map(o=>o.trim()).filter(Boolean)) as opt}
@@ -433,8 +433,8 @@
                       {#each ADDRESS_FIELDS as af}
                         {@const fk = `${field.name}_${af.key}`}
                         <div class="{af.full ? 'sm:col-span-2' : ''}">
-                          <label class="mb-1 block text-xs text-slate-500">{af.label}</label>
-                          <input type="text" value={previewValues[fk] ?? ''} placeholder={af.label}
+                          <label for="prev-{fk}" class="mb-1 block text-xs text-slate-500">{af.label}</label>
+                          <input id="prev-{fk}" type="text" value={previewValues[fk] ?? ''} placeholder={af.label}
                             oninput={(e) => previewValues = { ...previewValues, [fk]: e.target.value }}
                             class="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none" />
                         </div>
@@ -562,7 +562,7 @@
                     {#each OPERATORS as op}<option value={op.value}>{op.label}</option>{/each}
                   </select>
                   <input class="{cInp}" bind:value={cond.value} oninput={mutate} placeholder="value" />
-                  <button class="{cDel}" onclick={() => removeStepCondition(si, ci)}>
+                  <button aria-label="Remove condition" class="{cDel}" onclick={() => removeStepCondition(si, ci)}>
                     <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
                   </button>
                 </div>
@@ -585,6 +585,7 @@
             {@const vTypes   = validatorsFor(field.type)}
 
             <div
+              role="listitem"
               class="rounded-2xl border bg-slate-950 p-4 transition-all
                 {fDrag.si === si && fDrag.fi === fi ? 'opacity-40 scale-[0.99]' : ''}
                 {fDragO.si === si && fDragO.fi === fi && !(fDrag.si === si && fDrag.fi === fi) ? 'border-sky-500/60 border-dashed' : isDupe ? 'border-amber-500/60' : 'border-slate-800'}"
@@ -612,15 +613,15 @@
               <div class="grid gap-3 sm:grid-cols-2">
                 <!-- Label / content -->
                 <div class="{field.type === 'info' ? 'sm:col-span-2' : ''}">
-                  <label class="block text-xs font-medium text-slate-400 mb-1">
+                  <label for="fb-lbl-{si}-{fi}" class="block text-xs font-medium text-slate-400 mb-1">
                     {field.type === 'info' ? 'Content / text' : 'Label'}
                   </label>
                   {#if field.type === 'info'}
-                    <textarea class="{ic}" rows="2" value={field.label}
+                    <textarea id="fb-lbl-{si}-{fi}" class="{ic}" rows="2" value={field.label}
                       oninput={(e) => { field.label = e.target.value; mutate(); }}
                       placeholder="Heading or paragraph text…"></textarea>
                   {:else}
-                    <input class={ic} value={field.label}
+                    <input id="fb-lbl-{si}-{fi}" class={ic} value={field.label}
                       oninput={(e) => handleLabelChange(si, fi, e.target.value)} placeholder="Field label" />
                   {/if}
                 </div>
@@ -628,10 +629,10 @@
                 <!-- Key (hidden for info) -->
                 {#if !NO_KEY_TYPES.has(field.type)}
                   <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">
+                    <label for="fb-key-{si}-{fi}" class="block text-xs font-medium text-slate-400 mb-1">
                       Key <span class="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-400">auto-generated</span>
                     </label>
-                    <input class="w-full rounded-2xl border px-3 py-2 text-sm font-mono cursor-not-allowed
+                    <input id="fb-key-{si}-{fi}" class="w-full rounded-2xl border px-3 py-2 text-sm font-mono cursor-not-allowed
                       {isDupe ? 'border-amber-500/60 bg-amber-500/5 text-amber-300' : 'border-slate-800 bg-slate-800/50 text-slate-400'}"
                       value={field.name || '—'} readonly />
                   </div>
@@ -639,8 +640,8 @@
 
                 <!-- Type -->
                 <div>
-                  <label class="block text-xs font-medium text-slate-400 mb-1">Type</label>
-                  <select class={ic} bind:value={field.type}>
+                  <label for="fb-type-{si}-{fi}" class="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                  <select id="fb-type-{si}-{fi}" class={ic} bind:value={field.type}>
                     {#each FIELD_TYPES as t}<option value={t.value}>{t.label}</option>{/each}
                   </select>
                 </div>
@@ -648,8 +649,8 @@
                 <!-- Info variant -->
                 {#if field.type === 'info'}
                   <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Style</label>
-                    <select class={ic} bind:value={field.infoVariant}>
+                    <label for="fb-var-{si}-{fi}" class="block text-xs font-medium text-slate-400 mb-1">Style</label>
+                    <select id="fb-var-{si}-{fi}" class={ic} bind:value={field.infoVariant}>
                       {#each INFO_VARIANTS as v}<option value={v.value}>{v.label}</option>{/each}
                     </select>
                   </div>
@@ -666,8 +667,8 @@
               <!-- Options (select / radio) -->
               {#if OPTS_TYPES.has(field.type)}
                 <div class="mt-3">
-                  <label class="block text-xs font-medium text-slate-400 mb-1">Options <span class="text-slate-500">(comma separated)</span></label>
-                  <input class={ic} bind:value={field.options} placeholder="Option 1, Option 2, Option 3" />
+                  <label for="fb-opts-{si}-{fi}" class="block text-xs font-medium text-slate-400 mb-1">Options <span class="text-slate-500">(comma separated)</span></label>
+                  <input id="fb-opts-{si}-{fi}" class={ic} bind:value={field.options} placeholder="Option 1, Option 2, Option 3" />
                 </div>
               {/if}
 
@@ -709,18 +710,18 @@
                           </div>
                           <div class="grid gap-2 sm:grid-cols-2">
                             <div>
-                              <label class="block text-xs font-medium text-slate-400 mb-1">Label</label>
-                              <input class={ic2} value={sf.label} oninput={(e) => handleSubLabelChange(si, fi, sfi, e.target.value)} placeholder="Label" />
+                              <label for="fb-sf-lbl-{si}-{fi}-{sfi}" class="block text-xs font-medium text-slate-400 mb-1">Label</label>
+                              <input id="fb-sf-lbl-{si}-{fi}-{sfi}" class={ic2} value={sf.label} oninput={(e) => handleSubLabelChange(si, fi, sfi, e.target.value)} placeholder="Label" />
                             </div>
                             <div>
-                              <label class="block text-xs font-medium text-slate-400 mb-1">Key <span class="rounded-full bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">auto</span></label>
-                              <input class="w-full rounded-xl border px-3 py-1.5 text-xs font-mono cursor-not-allowed
+                              <label for="fb-sf-key-{si}-{fi}-{sfi}" class="block text-xs font-medium text-slate-400 mb-1">Key <span class="rounded-full bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">auto</span></label>
+                              <input id="fb-sf-key-{si}-{fi}-{sfi}" class="w-full rounded-xl border px-3 py-1.5 text-xs font-mono cursor-not-allowed
                                 {isSubDupe ? 'border-amber-500/60 bg-amber-500/5 text-amber-300' : 'border-slate-700 bg-slate-800/50 text-slate-400'}"
                                 value={sf.name || '—'} readonly />
                             </div>
                             <div>
-                              <label class="block text-xs font-medium text-slate-400 mb-1">Type</label>
-                              <select class={ic2} bind:value={sf.type}>
+                              <label for="fb-sf-type-{si}-{fi}-{sfi}" class="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                              <select id="fb-sf-type-{si}-{fi}-{sfi}" class={ic2} bind:value={sf.type}>
                                 {#each FIELD_TYPES.filter(t => t.value !== 'info' && t.value !== 'repeater') as t}
                                   <option value={t.value}>{t.label}</option>
                                 {/each}
@@ -733,8 +734,8 @@
                           </div>
                           {#if sf.type === 'select'}
                             <div class="mt-2">
-                              <label class="block text-xs font-medium text-slate-400 mb-1">Options <span class="text-slate-500">(comma)</span></label>
-                              <input class={ic2} bind:value={sf.options} placeholder="A, B, C" />
+                              <label for="fb-sf-opts-{si}-{fi}-{sfi}" class="block text-xs font-medium text-slate-400 mb-1">Options <span class="text-slate-500">(comma)</span></label>
+                              <input id="fb-sf-opts-{si}-{fi}-{sfi}" class={ic2} bind:value={sf.options} placeholder="A, B, C" />
                             </div>
                           {/if}
                         </div>
@@ -769,7 +770,7 @@
                             placeholder={vld.ruleType === 'regex' ? 'e.g. ^[A-Z]' : 'value'} />
                           <input class="{cInp}" bind:value={vld.message} oninput={mutate}
                             placeholder="Error message" />
-                          <button class="{cDel}" onclick={() => removeValidator(si, fi, vi)}>
+                          <button aria-label="Remove rule" class="{cDel}" onclick={() => removeValidator(si, fi, vi)}>
                             <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
                           </button>
                         </div>
@@ -808,7 +809,7 @@
                             {#each OPERATORS as op}<option value={op.value}>{op.label}</option>{/each}
                           </select>
                           <input class="{cInp}" bind:value={cond.value} oninput={mutate} placeholder="value" />
-                          <button class="{cDel}" onclick={() => removeCondition(si, fi, ci)}>
+                          <button aria-label="Remove condition" class="{cDel}" onclick={() => removeCondition(si, fi, ci)}>
                             <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
                           </button>
                         </div>

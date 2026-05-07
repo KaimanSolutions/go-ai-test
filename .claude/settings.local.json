@@ -16,7 +16,9 @@
       "PowerShell(sqllocaldb info 2>&1)",
       "PowerShell(docker --version 2>&1)",
       "Bash(Get-ChildItem \"c:\\\\Users\\\\Conno\\\\OneDrive\\\\Desktop\\\\FormBuilder\\\\backend\\\\Features\\\\Checklist\")",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(sqlcmd -S '.\\\\SQLEXPRESS' -d FormBuilder -E -Q ' *)",
+      "Bash(sqlcmd -S \".\\\\SQLEXPRESS\" -d FormBuilder -E -Q \"SELECT name FROM sys.tables WHERE name = 'ApplicationNotes'\")"
     ]
   }
 }

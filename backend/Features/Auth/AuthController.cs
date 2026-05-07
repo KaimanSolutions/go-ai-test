@@ -12,16 +12,21 @@ public sealed class AuthController : ControllerBase
     private readonly JwtAuthService      _jwtAuthService;
     private readonly ExternalAuthService _externalAuthService;
     private readonly UserAccountService  _userAccountService;
+    private readonly LoginEventService   _loginEvents;
 
     public AuthController(
         JwtAuthService      jwtAuthService,
         ExternalAuthService externalAuthService,
-        UserAccountService  userAccountService)
+        UserAccountService  userAccountService,
+        LoginEventService   loginEvents)
     {
         _jwtAuthService      = jwtAuthService;
         _externalAuthService = externalAuthService;
         _userAccountService  = userAccountService;
+        _loginEvents         = loginEvents;
     }
+
+    private string? UserAgent => Request.Headers.UserAgent.FirstOrDefault();
 
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
@@ -33,6 +38,7 @@ public sealed class AuthController : ControllerBase
         if (adminUser is not null)
         {
             var token = _jwtAuthService.GenerateToken(adminUser);
+            _loginEvents.Record(null, adminUser.Role, adminUser.Email, UserAgent, "Password");
             return Ok(new AuthResponse { AccessToken = token, UserName = adminUser.UserName, Email = adminUser.Email, Role = adminUser.Role });
         }
 
@@ -41,6 +47,7 @@ public sealed class AuthController : ControllerBase
         {
             var profile = _userAccountService.ToProfile(dbUser);
             var token   = _jwtAuthService.GenerateToken(profile);
+            _loginEvents.Record(dbUser.Id, dbUser.Role, dbUser.Email, UserAgent, "Password");
             return Ok(new AuthResponse { AccessToken = token, UserName = profile.UserName, Email = profile.Email, Role = profile.Role, CompanyId = profile.CompanyId, CompanyName = profile.CompanyName });
         }
 
@@ -72,6 +79,7 @@ public sealed class AuthController : ControllerBase
 
         var user  = _externalAuthService.BuildUserFromClaims(result.Principal.Claims);
         var token = _jwtAuthService.GenerateToken(user);
+        _loginEvents.Record(null, user.Role, user.Email, UserAgent, "SSO");
         return Ok(new AuthResponse { AccessToken = token, UserName = user.UserName, Email = user.Email, Role = user.Role });
     }
 

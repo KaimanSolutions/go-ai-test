@@ -13,6 +13,7 @@
   import Companies from './components/Companies.svelte';
   import Users from './components/Users.svelte';
   import Integrations from './components/Integrations.svelte';
+  import LoginActivity from './components/LoginActivity.svelte';
   import Workflows from './components/Workflows.svelte';
   import Applications from './components/Applications.svelte';
   import Rules from './components/Rules.svelte';
@@ -26,8 +27,10 @@
   let error = $state('');
   let selectedPortal = $state(''); // 'Admin' | 'Client' | 'Broker'
   let selectedPage = $state('Dashboard');
-  let clientPage = $state('dashboard');
-  let brokerPage = $state('dashboard');
+  let clientPage      = $state('dashboard');
+  let brokerPage      = $state('dashboard');
+  let clientOpenAppId = $state(null);
+  let brokerOpenAppId = $state(null);
 
   function handleLogout() {
     token = '';
@@ -57,7 +60,7 @@
   });
   let users     = $state({});
   let workflows = $state([]);
-  const menuItems = ['Applications', 'Dashboard', 'Forms', 'Workflows', 'Rules', 'Checklist', 'Templates', 'Companies', 'Users', 'Settings', 'Integrations', 'Help Centre'];
+  const menuItems = ['Applications', 'Dashboard', 'Forms', 'Workflows', 'Rules', 'Checklist', 'Templates', 'Companies', 'Users', 'Settings', 'Integrations', 'Login Activity', 'Help Centre'];
   const fontOptions = [
     { value: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif', label: 'Inter' },
     { value: 'Roboto, sans-serif', label: 'Roboto' },
@@ -88,6 +91,7 @@
     'Rules': 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z',
     'Checklist': 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
     'Templates': 'M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776',
+    'Login Activity': 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
     'Help Centre': 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
     'Profile': 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
   };
@@ -442,9 +446,12 @@
           {:else if clientPage === 'help'}
             <HelpCentre {token} role={user?.role} />
           {:else if clientPage === 'applications'}
-            <Applications {token} {user} />
+            <Applications {token} {user} openApplicationId={clientOpenAppId} />
           {:else}
-            <ClientPortal {user} onApplications={() => clientPage = 'applications'} />
+            <ClientPortal {user} {token}
+              onApplications={() => { clientOpenAppId = null; clientPage = 'applications'; }}
+              onOpenApplication={(id) => { clientOpenAppId = id; clientPage = 'applications'; }}
+            />
           {/if}
         </main>
       </div>
@@ -540,11 +547,14 @@
           {:else if brokerPage === 'help'}
             <HelpCentre {token} role={user?.role} />
           {:else if brokerPage === 'applications'}
-            <Applications {token} {user} />
+            <Applications {token} {user} openApplicationId={brokerOpenAppId} />
           {:else if brokerPage === 'company'}
             <MyCompany {token} />
           {:else}
-            <BrokerPortal {user} onApplications={() => brokerPage = 'applications'} />
+            <BrokerPortal {user} {token}
+              onApplications={() => { brokerOpenAppId = null; brokerPage = 'applications'; }}
+              onOpenApplication={(id) => { brokerOpenAppId = id; brokerPage = 'applications'; }}
+            />
           {/if}
         </main>
       </div>
@@ -689,8 +699,9 @@
 
                     <!-- Workflow link -->
                     <div>
-                      <label class="mb-1.5 block text-xs font-medium text-slate-500">Linked workflow</label>
+                      <label for="wf-link-{s.id}" class="mb-1.5 block text-xs font-medium text-slate-500">Linked workflow</label>
                       <select
+                        id="wf-link-{s.id}"
                         value={s.workflowId ?? ''}
                         onchange={async (e) => {
                           const wfId = e.target.value ? Number(e.target.value) : null;
@@ -848,6 +859,9 @@
             <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl">
               <Integrations {token} />
             </section>
+
+          {:else if selectedPage === 'Login Activity'}
+            <LoginActivity {token} />
 
           {:else if selectedPage === 'Help Centre'}
             <HelpCentre {token} role={user?.role} />

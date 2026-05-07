@@ -1,8 +1,8 @@
 <script>
   import { onMount } from 'svelte';
-  import { fetchApplications, fetchApplication, createApplication, updateApplication, fetchSchemas, evaluateRules, fetchRuleOutcomes, fetchApplicationChecklist, generateApplicationChecklist, respondToChecklistItem, uploadChecklistDocument, updateChecklistItemStatus, addChecklistComment } from '../lib/auth.js';
+  import { fetchApplications, fetchApplication, createApplication, updateApplication, fetchSchemas, evaluateRules, fetchRuleOutcomes, fetchApplicationChecklist, generateApplicationChecklist, respondToChecklistItem, uploadChecklistDocument, updateChecklistItemStatus, addChecklistComment, fetchNotes, addNote, updateNoteVisibility } from '../lib/auth.js';
 
-  let { token, user } = $props();
+  let { token, user, openApplicationId = null } = $props();
 
   // ── State ─────────────────────────────────────────────────────────────────────
   let view            = $state('list');   // 'list' | 'new' | 'form' | 'submitted'
@@ -57,6 +57,17 @@
   let checklistUploading = $state({});   // { [itemId]: boolean }
   let checklistComments  = $state({});   // { [itemId]: string } draft comments
 
+  // ── Notes ─────────────────────────────────────────────────────────────────────
+  let notes           = $state([]);
+  let notesLoading    = $state(false);
+  let noteContent     = $state('');
+  let noteCategory    = $state('');
+  let noteClientVis   = $state(false);
+  let noteBrokerVis   = $state(false);
+  let noteSaving      = $state(false);
+
+  const NOTE_CATEGORIES = ['General', 'Decision', 'Query', 'Document Request', 'Client Communication'];
+
   function showToast(msg) {
     toast = msg;
     clearTimeout(toastTimer);
@@ -66,6 +77,7 @@
   // ── Lifecycle ─────────────────────────────────────────────────────────────────
   onMount(async () => {
     await Promise.all([loadApplications(), loadSchemas()]);
+    if (openApplicationId) await openDetail(openApplicationId);
   });
 
   async function loadApplications() {
@@ -112,9 +124,14 @@
     currentStep = 0;
     ruleOutcomes        = [];
     selectedRuleOutcome = null;
+    notes               = [];
+    noteContent         = '';
+    noteCategory        = '';
+    noteClientVis       = false;
+    noteBrokerVis       = false;
     view                = res.submittedAt ? 'submitted' : 'form';
 
-    // Load persisted rule outcome history and checklist for submitted applications
+    // Load persisted rule outcome history, checklist, and notes for submitted applications
     if (res.submittedAt) {
       rulesLoading = true;
       const ro = await fetchRuleOutcomes(res.id, token);
@@ -131,7 +148,49 @@
         checklistUploading = {};
         checklistComments  = {};
       }
+
+      notesLoading = true;
+      const nl = await fetchNotes(res.id, token);
+      notesLoading = false;
+      if (Array.isArray(nl)) notes = nl;
     }
+  }
+
+  async function submitNote() {
+    if (!noteContent.trim()) return;
+    noteSaving = true;
+    const res = await addNote(selected.id, {
+      content: noteContent.trim(),
+      category: noteCategory || null,
+      isClientVisible: noteClientVis,
+      isBrokerVisible: noteBrokerVis,
+    }, token);
+    noteSaving = false;
+    if (res.error) { showToast('Failed to save note.'); return; }
+    noteContent   = '';
+    noteCategory  = '';
+    noteClientVis = false;
+    noteBrokerVis = false;
+    const nl = await fetchNotes(selected.id, token);
+    if (Array.isArray(nl)) notes = nl;
+  }
+
+  async function toggleNoteVisibility(note, field) {
+    const cv = field === 'client' ? !note.isClientVisible : note.isClientVisible;
+    const bv = field === 'broker' ? !note.isBrokerVisible : note.isBrokerVisible;
+    const res = await updateNoteVisibility(note.id, cv, bv, token);
+    if (!res.error) {
+      note.isClientVisible = cv;
+      note.isBrokerVisible = bv;
+      notes = [...notes];
+    }
+  }
+
+  function noteTimestamp(iso) {
+    return new Date(iso).toLocaleString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
   }
 
   // ── Step navigation ────────────────────────────────────────────────────────────
@@ -447,7 +506,7 @@
             class="w-full rounded-2xl border border-slate-700 bg-slate-900 py-2.5 pl-9 pr-4 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"
           />
           {#if searchQuery}
-            <button onclick={() => searchQuery = ''} class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+            <button aria-label="Clear search" onclick={() => searchQuery = ''} class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
               <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
               </svg>
@@ -726,22 +785,24 @@
                         {/if}
                       </div>
                       <div class="grid gap-3 sm:grid-cols-2">
-                        {#each (field.subFields ?? []) as sf}
+                        {#each (field.subFields ?? []) as sf, sfi}
                           <div class="{sf.type === 'checkbox' ? 'flex items-center gap-2 pt-4' : ''}">
                             {#if sf.type === 'checkbox'}
                               <input
+                                id="app-sf-{field.name}-{itemIndex}-{sfi}"
                                 type="checkbox"
                                 checked={!!item[sf.name]}
                                 onchange={(e) => { item[sf.name] = e.target.checked; formValues = { ...formValues }; }}
                                 class="h-4 w-4 rounded border-slate-600 bg-slate-900 accent-sky-500"
                               />
-                              <label class="text-sm text-slate-300 select-none">{sf.label}</label>
+                              <label for="app-sf-{field.name}-{itemIndex}-{sfi}" class="text-sm text-slate-300 select-none">{sf.label}</label>
                             {:else}
-                              <label class="mb-1 block text-xs font-medium text-slate-400">
+                              <label for="app-sf-{field.name}-{itemIndex}-{sfi}" class="mb-1 block text-xs font-medium text-slate-400">
                                 {sf.label}{#if sf.required}<span class="ml-0.5 text-red-400">*</span>{/if}
                               </label>
                               {#if sf.type === 'select'}
                                 <select
+                                  id="app-sf-{field.name}-{itemIndex}-{sfi}"
                                   value={item[sf.name] ?? ''}
                                   onchange={(e) => { item[sf.name] = e.target.value; formValues = { ...formValues }; }}
                                   class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-sky-500 focus:outline-none"
@@ -751,6 +812,7 @@
                                 </select>
                               {:else}
                                 <input
+                                  id="app-sf-{field.name}-{itemIndex}-{sfi}"
                                   type={sf.type === 'email' ? 'email' : sf.type === 'tel' ? 'tel' : sf.type === 'number' ? 'number' : sf.type === 'date' ? 'date' : 'text'}
                                   value={item[sf.name] ?? ''}
                                   oninput={(e) => { item[sf.name] = e.target.value; formValues = { ...formValues }; }}
@@ -769,12 +831,13 @@
 
             {:else}
             <div>
-              <label class="mb-1.5 block text-sm font-medium text-white">
+              <label for="app-f-{field.name}" class="mb-1.5 block text-sm font-medium text-white">
                 {field.label}{#if field.required}<span class="ml-0.5 text-red-400">*</span>{/if}
               </label>
 
               {#if field.type === 'select'}
                 <select
+                  id="app-f-{field.name}"
                   value={formValues[field.name] ?? ''}
                   onchange={(e) => formValues = { ...formValues, [field.name]: e.target.value }}
                   class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white focus:border-sky-500 focus:outline-none"
@@ -814,6 +877,7 @@
 
               {:else if field.type === 'textarea'}
                 <textarea
+                  id="app-f-{field.name}"
                   value={formValues[field.name] ?? ''}
                   oninput={(e) => formValues = { ...formValues, [field.name]: e.target.value }}
                   rows="4"
@@ -836,8 +900,9 @@
                     {#each addrFields as af}
                       {@const fk = `${field.name}_${af.key}`}
                       <div class="{af.full ? 'sm:col-span-2' : ''}">
-                        <label class="mb-1 block text-xs font-medium text-slate-500">{af.label}</label>
+                        <label for="app-addr-{fk}" class="mb-1 block text-xs font-medium text-slate-500">{af.label}</label>
                         <input
+                          id="app-addr-{fk}"
                           type="text"
                           value={formValues[fk] ?? ''}
                           oninput={(e) => formValues = { ...formValues, [fk]: e.target.value }}
@@ -1197,6 +1262,101 @@
             </div>
           </div>
         {/if}
+
+        <!-- Notes -->
+        <div class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl">
+          <div class="mb-5 flex items-center justify-between gap-3">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Notes</p>
+            {#if notes.length > 0}
+              <span class="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400">{notes.length}</span>
+            {/if}
+          </div>
+
+          <!-- Existing notes -->
+          {#if notesLoading}
+            <p class="text-xs text-slate-500">Loading notes…</p>
+          {:else if notes.length > 0}
+            <div class="mb-5 space-y-3">
+              {#each notes as note (note.id)}
+                <div class="rounded-2xl border border-slate-700/60 bg-slate-950/60 p-4">
+                  <!-- Header row -->
+                  <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide
+                        {note.authorRole === 'Admin'  ? 'bg-slate-700 text-slate-300'
+                        : note.authorRole === 'Broker' ? 'bg-violet-500/20 text-violet-400'
+                        :                               'bg-sky-500/20 text-sky-400'}">
+                        {note.authorRole}
+                      </span>
+                      <span class="text-xs font-semibold text-white">{note.authorName}</span>
+                      {#if note.category}
+                        <span class="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-400">{note.category}</span>
+                      {/if}
+                    </div>
+                    <span class="shrink-0 text-[11px] text-slate-500">{noteTimestamp(note.createdAt)}</span>
+                  </div>
+                  {#if note.stage}
+                    <p class="mt-1 text-[10px] text-slate-600">Stage: {note.stage}</p>
+                  {/if}
+                  <p class="mt-2 text-sm leading-relaxed text-slate-300">{note.content}</p>
+                  <!-- Visibility toggles (admin only) -->
+                  {#if user?.role === 'Admin'}
+                    <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-700/50 pt-2.5">
+                      <span class="text-[10px] font-medium text-slate-600">Visible to:</span>
+                      <button
+                        onclick={() => toggleNoteVisibility(note, 'client')}
+                        class="rounded-full px-2 py-0.5 text-[10px] font-semibold transition
+                          {note.isClientVisible ? 'bg-sky-500/20 text-sky-400 hover:bg-sky-500/30' : 'bg-slate-800 text-slate-600 hover:text-slate-400'}"
+                      >Client</button>
+                      <button
+                        onclick={() => toggleNoteVisibility(note, 'broker')}
+                        class="rounded-full px-2 py-0.5 text-[10px] font-semibold transition
+                          {note.isBrokerVisible ? 'bg-violet-500/20 text-violet-400 hover:bg-violet-500/30' : 'bg-slate-800 text-slate-600 hover:text-slate-400'}"
+                      >Broker</button>
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          {/if}
+
+          <!-- Add note form -->
+          <div class="space-y-3 {notes.length > 0 ? 'border-t border-slate-700/50 pt-4' : ''}">
+            <textarea
+              placeholder="Add a note…"
+              bind:value={noteContent}
+              rows="3"
+              class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-sky-500 focus:outline-none resize-none"
+            ></textarea>
+            <div class="flex flex-wrap items-center gap-3">
+              <select bind:value={noteCategory}
+                class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-300 focus:border-sky-500 focus:outline-none">
+                <option value="">No category</option>
+                {#each NOTE_CATEGORIES as cat}
+                  <option value={cat}>{cat}</option>
+                {/each}
+              </select>
+              {#if user?.role === 'Admin'}
+                <label class="flex cursor-pointer items-center gap-1.5">
+                  <input type="checkbox" bind:checked={noteClientVis}
+                    class="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 accent-sky-500" />
+                  <span class="text-xs text-slate-400">Client visible</span>
+                </label>
+                <label class="flex cursor-pointer items-center gap-1.5">
+                  <input type="checkbox" bind:checked={noteBrokerVis}
+                    class="h-3.5 w-3.5 rounded border-slate-600 bg-slate-900 accent-violet-500" />
+                  <span class="text-xs text-slate-400">Broker visible</span>
+                </label>
+              {/if}
+              <button
+                onclick={submitNote}
+                disabled={!noteContent.trim() || noteSaving}
+                class="ml-auto rounded-2xl bg-sky-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-sky-400 disabled:opacity-40"
+              >{noteSaving ? 'Saving…' : 'Add note'}</button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Right: meta + workflow -->
@@ -1380,6 +1540,7 @@
                 <p class="mt-0.5 text-sm font-semibold text-white">{o.ruleName}</p>
               </div>
               <button
+                aria-label="Close"
                 onclick={() => selectedRuleOutcome = null}
                 class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-500 hover:text-white transition"
               >
