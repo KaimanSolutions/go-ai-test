@@ -11,8 +11,11 @@ public sealed class UserAccount
     public string  LastName      { get; set; } = string.Empty;
     public string  Phone         { get; set; } = string.Empty;
     public string? LicenseNumber { get; set; }
+    public string? JobTitle      { get; set; }
+    public string? Department    { get; set; }
     public int?    CompanyId     { get; set; }
     public Company? Company      { get; set; }
+    public bool    IsLockedOut   { get; set; } = false;
     public DateTime CreatedAt    { get; set; } = DateTime.UtcNow;
 }
 

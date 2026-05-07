@@ -90,4 +90,40 @@ public sealed class AuthController : ControllerBase
     [Authorize(Roles = UserRoles.Admin)]
     [HttpGet("users")]
     public IActionResult GetUsers() => Ok(_userAccountService.GetUsersGroupedByRole());
+
+    [Authorize(Roles = UserRoles.Admin)]
+    [HttpGet("users/{id}")]
+    public IActionResult GetUser(int id)
+    {
+        var user = _userAccountService.GetById(id);
+        if (user is null) return NotFound($"User {id} not found.");
+        return Ok(user);
+    }
+
+    [Authorize(Roles = UserRoles.Admin)]
+    [HttpPost("users")]
+    public IActionResult CreateUser([FromBody] RegistrationRequest request)
+    {
+        var (success, error) = _userAccountService.AdminCreateUser(request);
+        if (!success) return BadRequest(error);
+        return Ok(new { message = $"{request.Role} account created." });
+    }
+
+    [Authorize(Roles = UserRoles.Admin)]
+    [HttpDelete("users/{id}")]
+    public IActionResult DeleteUser(int id)
+    {
+        var (success, error) = _userAccountService.Delete(id);
+        if (!success) return NotFound(error);
+        return NoContent();
+    }
+
+    [Authorize(Roles = UserRoles.Admin)]
+    [HttpPatch("users/{id}/lockout")]
+    public IActionResult SetLockout(int id, [FromBody] LockoutRequest request)
+    {
+        var (success, error) = _userAccountService.SetLockout(id, request.Locked);
+        if (!success) return NotFound(error);
+        return NoContent();
+    }
 }

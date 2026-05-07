@@ -15,8 +15,12 @@ builder.Services.AddDbContext<FormBuilderDbContext>(options =>
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
+    {
         options.JsonSerializerOptions.Converters.Add(
-            new System.Text.Json.Serialization.JsonStringEnumConverter()));
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -26,15 +30,21 @@ builder.Services.AddScoped<JwtAuthService>();
 builder.Services.AddScoped<ExternalAuthService>();
 builder.Services.AddScoped<BrandingSettingsService>();
 builder.Services.AddScoped<HelpArticleService>();
-builder.Services.AddScoped<ProfileSettingsService>();
 builder.Services.AddScoped<UserAccountService>();
 builder.Services.AddScoped<CompanyService>();
 builder.Services.AddScoped<IntegrationSettingsService>();
 builder.Services.AddScoped<WorkflowService>();
+builder.Services.AddScoped<ApplicationService>();
+builder.Services.AddSingleton<ExpressionEvaluator>();
+builder.Services.AddScoped<BusinessRuleService>();
+builder.Services.AddScoped<ChecklistService>();
+builder.Services.AddScoped<TemplateService>();
 builder.Services.AddTransient<ApiLoggingHandler>();
 builder.Services.AddHttpClient<EpcService>()
     .AddHttpMessageHandler<ApiLoggingHandler>();
 builder.Services.AddHttpClient<FcaLookupService>()
+    .AddHttpMessageHandler<ApiLoggingHandler>();
+builder.Services.AddHttpClient<CompaniesHouseService>()
     .AddHttpMessageHandler<ApiLoggingHandler>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -100,8 +110,6 @@ using (var scope = app.Services.CreateScope())
     var formService = scope.ServiceProvider.GetRequiredService<FormSchemaService>();
     formService.EnsureSampleData();
 
-    var profileService = scope.ServiceProvider.GetRequiredService<ProfileSettingsService>();
-    profileService.EnsureDefaultProfile();
 }
 
 app.UseSwagger();

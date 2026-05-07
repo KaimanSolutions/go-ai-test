@@ -137,119 +137,152 @@
     <div class="space-y-4 pt-6">
       {#each schema.steps[currentStep].fields as field}
         {#if isFieldVisible(field, values)}
-          {@const fieldErr = stepErrors[field.name]}
 
-          <div class="rounded-3xl border bg-slate-950 p-5 shadow-sm transition
-            {fieldErr ? 'border-red-500/40' : 'border-slate-800'}">
-
-            {#if field.type === 'checkbox'}
-              <div class="flex items-center gap-3">
-                <input
-                  id="field-{field.name}"
-                  type="checkbox"
-                  class="h-5 w-5 rounded border-slate-700 bg-slate-900 text-sky-600 focus:ring-sky-500"
-                  bind:checked={values[field.name]}
-                />
-                <label for="field-{field.name}" class="text-sm font-medium text-white">{field.label}</label>
-              </div>
-
-            {:else if field.type === 'repeater'}
-              <p class="text-sm font-medium text-white mb-3">{field.label}{field.required ? ' *' : ''}</p>
-              <div class="space-y-3">
-                {#each values[field.name] ?? [] as item, itemIndex}
-                  <div class="rounded-2xl border border-slate-700 bg-slate-900/60 p-4">
-                    <div class="flex items-center justify-between mb-3">
-                      <span class="text-xs font-semibold uppercase tracking-widest text-slate-400">{field.label} {itemIndex + 1}</span>
-                      {#if (values[field.name] ?? []).length > 1}
-                        <button
-                          onclick={() => removeRepeaterItem(field.name, itemIndex)}
-                          class="rounded-xl bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-400 hover:bg-red-500 hover:text-white transition"
-                        >Remove</button>
-                      {/if}
-                    </div>
-                    <div class="grid gap-3 sm:grid-cols-2">
-                      {#each field.subFields ?? [] as subField}
-                        {@const sfErr = stepErrors[`${field.name}_${itemIndex}_${subField.name}`]}
-                        <div class="{subField.type === 'checkbox' ? 'flex items-center gap-2 pt-4' : ''}">
-                          {#if subField.type === 'checkbox'}
-                            <input
-                              id="rf-{field.name}-{itemIndex}-{subField.name}"
-                              type="checkbox"
-                              class="h-4 w-4 rounded border-slate-700 bg-slate-900 text-sky-500"
-                              bind:checked={item[subField.name]}
-                            />
-                            <label for="rf-{field.name}-{itemIndex}-{subField.name}" class="text-sm text-slate-300 select-none">{subField.label}</label>
-                          {:else}
-                            <label for="rf-{field.name}-{itemIndex}-{subField.name}" class="block text-xs font-medium text-slate-400 mb-1">
-                              {subField.label}{subField.required ? ' *' : ''}
-                            </label>
-                            {#if subField.type === 'select'}
-                              <select
-                                id="rf-{field.name}-{itemIndex}-{subField.name}"
-                                class="w-full rounded-xl border px-3 py-2 text-white text-sm bg-slate-950 focus:outline-none transition
-                                  {sfErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
-                                bind:value={item[subField.name]}
-                              >
-                                <option value="">Select…</option>
-                                {#each subField.options ?? [] as opt}
-                                  <option value={opt}>{opt}</option>
-                                {/each}
-                              </select>
-                            {:else}
-                              <input
-                                id="rf-{field.name}-{itemIndex}-{subField.name}"
-                                type={subField.type}
-                                class="w-full rounded-xl border px-3 py-2 text-white text-sm bg-slate-950 focus:outline-none transition
-                                  {sfErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
-                                bind:value={item[subField.name]}
-                              />
-                            {/if}
-                            {#if sfErr}
-                              <p class="mt-1 text-xs text-red-400">{sfErr}</p>
-                            {/if}
-                          {/if}
-                        </div>
-                      {/each}
-                    </div>
-                  </div>
-                {/each}
-                <button
-                  onclick={() => addRepeaterItem(field.name, field.subFields)}
-                  class="rounded-2xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
-                >+ Add {field.label}</button>
-              </div>
-
+          {#if field.type === 'info'}
+            <!-- Info / heading — rendered as semantic HTML, no card wrapper -->
+            {#if field.infoVariant === 'heading'}
+              <h2 class="text-xl font-bold text-white">{field.label}</h2>
+            {:else if field.infoVariant === 'subheading'}
+              <h3 class="text-base font-semibold text-slate-200">{field.label}</h3>
+            {:else if field.infoVariant === 'warning'}
+              <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">{field.label}</div>
             {:else}
-              <label for="field-{field.name}" class="block text-sm font-medium text-white mb-2">
-                {field.label}{field.required ? ' *' : ''}
-              </label>
-              {#if field.type === 'select'}
-                <select
-                  id="field-{field.name}"
-                  class="w-full rounded-2xl border px-4 py-3 text-white bg-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 transition
-                    {fieldErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
-                  bind:value={values[field.name]}
-                >
-                  <option value="">Select…</option>
-                  {#each field.options as option}
-                    <option value={option}>{option}</option>
-                  {/each}
-                </select>
-              {:else}
-                <input
-                  id="field-{field.name}"
-                  type={field.type}
-                  class="w-full rounded-2xl border px-4 py-3 text-white bg-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 transition
-                    {fieldErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
-                  bind:value={values[field.name]}
-                />
-              {/if}
-              {#if fieldErr}
-                <p class="mt-1.5 text-xs text-red-400">{fieldErr}</p>
-              {/if}
+              <p class="text-sm leading-relaxed text-slate-300">{field.label}</p>
             {/if}
 
-          </div>
+          {:else}
+            {@const fieldErr = stepErrors[field.name]}
+            <div class="rounded-3xl border bg-slate-950 p-5 shadow-sm transition
+              {fieldErr ? 'border-red-500/40' : 'border-slate-800'}">
+
+              {#if field.type === 'checkbox'}
+                <div class="flex items-center gap-3">
+                  <input
+                    id="field-{field.name}"
+                    type="checkbox"
+                    class="h-5 w-5 rounded border-slate-700 bg-slate-900 text-sky-600 focus:ring-sky-500"
+                    bind:checked={values[field.name]}
+                  />
+                  <label for="field-{field.name}" class="text-sm font-medium text-white">{field.label}</label>
+                </div>
+
+              {:else if field.type === 'repeater'}
+                <p class="text-sm font-medium text-white mb-3">{field.label}{field.required ? ' *' : ''}</p>
+                <div class="space-y-3">
+                  {#each values[field.name] ?? [] as item, itemIndex}
+                    <div class="rounded-2xl border border-slate-700 bg-slate-900/60 p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold uppercase tracking-widest text-slate-400">{field.label} {itemIndex + 1}</span>
+                        {#if (values[field.name] ?? []).length > 1}
+                          <button
+                            onclick={() => removeRepeaterItem(field.name, itemIndex)}
+                            class="rounded-xl bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-400 hover:bg-red-500 hover:text-white transition"
+                          >Remove</button>
+                        {/if}
+                      </div>
+                      <div class="grid gap-3 sm:grid-cols-2">
+                        {#each field.subFields ?? [] as subField}
+                          {@const sfErr = stepErrors[`${field.name}_${itemIndex}_${subField.name}`]}
+                          <div class="{subField.type === 'checkbox' ? 'flex items-center gap-2 pt-4' : ''}">
+                            {#if subField.type === 'checkbox'}
+                              <input
+                                id="rf-{field.name}-{itemIndex}-{subField.name}"
+                                type="checkbox"
+                                class="h-4 w-4 rounded border-slate-700 bg-slate-900 text-sky-500"
+                                bind:checked={item[subField.name]}
+                              />
+                              <label for="rf-{field.name}-{itemIndex}-{subField.name}" class="text-sm text-slate-300 select-none">{subField.label}</label>
+                            {:else}
+                              <label for="rf-{field.name}-{itemIndex}-{subField.name}" class="block text-xs font-medium text-slate-400 mb-1">
+                                {subField.label}{subField.required ? ' *' : ''}
+                              </label>
+                              {#if subField.type === 'select'}
+                                <select
+                                  id="rf-{field.name}-{itemIndex}-{subField.name}"
+                                  class="w-full rounded-xl border px-3 py-2 text-white text-sm bg-slate-950 focus:outline-none transition
+                                    {sfErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
+                                  bind:value={item[subField.name]}
+                                >
+                                  <option value="">Select…</option>
+                                  {#each subField.options ?? [] as opt}
+                                    <option value={opt}>{opt}</option>
+                                  {/each}
+                                </select>
+                              {:else}
+                                <input
+                                  id="rf-{field.name}-{itemIndex}-{subField.name}"
+                                  type={subField.type}
+                                  class="w-full rounded-xl border px-3 py-2 text-white text-sm bg-slate-950 focus:outline-none transition
+                                    {sfErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
+                                  bind:value={item[subField.name]}
+                                />
+                              {/if}
+                              {#if sfErr}
+                                <p class="mt-1 text-xs text-red-400">{sfErr}</p>
+                              {/if}
+                            {/if}
+                          </div>
+                        {/each}
+                      </div>
+                    </div>
+                  {/each}
+                  <button
+                    onclick={() => addRepeaterItem(field.name, field.subFields)}
+                    class="rounded-2xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800 transition"
+                  >+ Add {field.label}</button>
+                </div>
+
+              {:else}
+                <label for="field-{field.name}" class="block text-sm font-medium text-white mb-2">
+                  {field.label}{field.required ? ' *' : ''}
+                </label>
+                {#if field.type === 'select'}
+                  <select
+                    id="field-{field.name}"
+                    class="w-full rounded-2xl border px-4 py-3 text-white bg-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 transition
+                      {fieldErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
+                    bind:value={values[field.name]}
+                  >
+                    <option value="">Select…</option>
+                    {#each field.options as option}
+                      <option value={option}>{option}</option>
+                    {/each}
+                  </select>
+                {:else if field.type === 'textarea'}
+                  <textarea
+                    id="field-{field.name}"
+                    rows="4"
+                    class="w-full rounded-2xl border px-4 py-3 text-white bg-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 transition
+                      {fieldErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
+                    bind:value={values[field.name]}
+                  ></textarea>
+                {:else if field.type === 'currency'}
+                  <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400">£</span>
+                    <input
+                      id="field-{field.name}"
+                      type="number" step="0.01" min="0"
+                      class="w-full rounded-2xl border py-3 pl-8 pr-4 text-white bg-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 transition
+                        {fieldErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
+                      bind:value={values[field.name]}
+                    />
+                  </div>
+                {:else}
+                  <input
+                    id="field-{field.name}"
+                    type={field.type === 'email' ? 'email' : field.type === 'tel' ? 'tel' : field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+                    class="w-full rounded-2xl border px-4 py-3 text-white bg-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-200 transition
+                      {fieldErr ? 'border-red-500/60' : 'border-slate-800 focus:border-sky-500'}"
+                    bind:value={values[field.name]}
+                  />
+                {/if}
+                {#if fieldErr}
+                  <p class="mt-1.5 text-xs text-red-400">{fieldErr}</p>
+                {/if}
+              {/if}
+
+            </div>
+          {/if}
         {/if}
       {/each}
 

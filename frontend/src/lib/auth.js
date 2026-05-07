@@ -145,11 +145,14 @@ export async function saveUserProfile(profile, token) {
   try {
     const response = await fetch(`${API_BASE}/profile`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(profile)
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        firstName:  profile.firstName,
+        lastName:   profile.lastName,
+        phone:      profile.phone,
+        jobTitle:   profile.jobTitle,
+        department: profile.department
+      })
     });
     if (!response.ok) {
       const message = await response.text();
@@ -178,6 +181,17 @@ export async function register(data) {
   }
 }
 
+export async function searchBrokerCompanies(fca) {
+  try {
+    const params = fca ? `?fca=${encodeURIComponent(fca)}` : '';
+    const response = await fetch(`${API_BASE}/company/brokers${params}`);
+    if (!response.ok) return [];
+    return await response.json();
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchNetworks() {
   try {
     const response = await fetch(`${API_BASE}/company/networks`);
@@ -197,6 +211,21 @@ export async function fetchCompanies() {
     if (!response.ok) {
       const message = await response.text();
       return { error: message || 'Unable to fetch companies.' };
+    }
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function fetchMyCompany(token) {
+  try {
+    const response = await fetch(`${API_BASE}/company/mine`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to fetch company details.' };
     }
     return await response.json();
   } catch (error) {
@@ -436,6 +465,152 @@ export async function deleteWorkflow(id, token) {
   }
 }
 
+export async function fetchUserById(id, token) {
+  try {
+    const response = await fetch(`${API_BASE}/auth/users/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to fetch user.' };
+    }
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function adminCreateUser(data, token) {
+  try {
+    const response = await fetch(`${API_BASE}/auth/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to create user.' };
+    }
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function setUserLockout(id, locked, token) {
+  try {
+    const response = await fetch(`${API_BASE}/auth/users/${id}/lockout`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ locked })
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to update lockout.' };
+    }
+    return {};
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function adminDeleteUser(id, token) {
+  try {
+    const response = await fetch(`${API_BASE}/auth/users/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to delete user.' };
+    }
+    return {};
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function fetchApplications(token) {
+  try {
+    const response = await fetch(`${API_BASE}/application`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to fetch applications.' };
+    }
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function fetchApplication(id, token) {
+  try {
+    const response = await fetch(`${API_BASE}/application/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to fetch application.' };
+    }
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function createApplication(formSchemaId, token) {
+  try {
+    const response = await fetch(`${API_BASE}/application`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ formSchemaId })
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to create application.' };
+    }
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function updateApplication(id, data, token) {
+  try {
+    const response = await fetch(`${API_BASE}/application/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to update application.' };
+    }
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function linkWorkflowToSchema(schemaId, workflowId, token) {
+  try {
+    const response = await fetch(`${API_BASE}/formbuilder/schema/${encodeURIComponent(schemaId)}/workflow`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ workflowId: workflowId ?? null })
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to link workflow.' };
+    }
+    return {};
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
 export async function deleteSchema(id, token) {
   try {
     const response = await fetch(`${API_BASE}/formbuilder/schema/${encodeURIComponent(id)}`, {
@@ -445,11 +620,273 @@ export async function deleteSchema(id, token) {
 
     if (!response.ok) {
       const message = await response.text();
-      return { error: message || 'Unable to delete schema.' };
+      return { error: message || 'Unable to archive schema.' };
     }
 
     return {};
   } catch (error) {
     return { error: error.message };
   }
+}
+
+export async function fetchArchivedSchemas(token) {
+  try {
+    const response = await fetch(`${API_BASE}/formbuilder/schemas/archived`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to load archived schemas.' };
+    }
+
+    return await response.json();
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+export async function restoreSchema(id, token) {
+  try {
+    const response = await fetch(`${API_BASE}/formbuilder/schema/${encodeURIComponent(id)}/restore`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const message = await response.text();
+      return { error: message || 'Unable to restore schema.' };
+    }
+
+    return {};
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+// ── Business rules ────────────────────────────────────────────────────────────
+
+export async function fetchRules(token, formSchemaId = null) {
+  try {
+    const qs = formSchemaId ? `?formSchemaId=${encodeURIComponent(formSchemaId)}` : '';
+    const res = await fetch(`${API_BASE}/rules${qs}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok ? await res.json() : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function saveRule(id, payload, token) {
+  try {
+    const res = await fetch(id ? `${API_BASE}/rules/${id}` : `${API_BASE}/rules`, {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) return { error: (await res.json()).error || await res.text() };
+    return await res.json();
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function deleteRule(id, token) {
+  try {
+    const res = await fetch(`${API_BASE}/rules/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok ? {} : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}
+
+// ── Checklist ─────────────────────────────────────────────────────────────────
+
+// ── Templates ─────────────────────────────────────────────────────────────────
+
+export async function fetchTemplates(token, type = null) {
+  try {
+    const qs = type ? `?type=${encodeURIComponent(type)}` : '';
+    const res = await fetch(`${API_BASE}/templates${qs}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return { error: await res.text() || 'Failed to load templates.' };
+    return await res.json();
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function fetchTemplate(id, token) {
+  try {
+    const res = await fetch(`${API_BASE}/templates/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return { error: 'Template not found.' };
+    return await res.json();
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function saveTemplate(template, token) {
+  const method = template.id ? 'PUT' : 'POST';
+  const url = template.id ? `${API_BASE}/templates/${template.id}` : `${API_BASE}/templates`;
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(template)
+    });
+    if (!res.ok) { const b = await res.json().catch(() => ({})); return { error: b.error || 'Failed to save template.' }; }
+    return await res.json();
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function deleteTemplate(id, token) {
+  try {
+    const res = await fetch(`${API_BASE}/templates/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return { error: 'Failed to delete template.' };
+    return {};
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function compileMjml(mjml, token) {
+  try {
+    const res = await fetch(`${API_BASE}/templates/compile-mjml`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ mjml })
+    });
+    const body = await res.json();
+    if (!res.ok) return { error: body.error || 'Compilation failed.' };
+    return body; // { html }
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function fetchChecklist(token, formSchemaId = null) {
+  try {
+    const qs = formSchemaId ? `?formSchemaId=${encodeURIComponent(formSchemaId)}` : '';
+    const res = await fetch(`${API_BASE}/checklist${qs}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return { error: await res.text() || 'Failed to load checklist.' };
+    return await res.json();
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function saveChecklistItem(item, token) {
+  const method = item.id ? 'PUT' : 'POST';
+  const url = item.id ? `${API_BASE}/checklist/${item.id}` : `${API_BASE}/checklist`;
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(item)
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      return { error: body.error || 'Failed to save item.' };
+    }
+    return await res.json();
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function deleteChecklistItem(id, token) {
+  try {
+    const res = await fetch(`${API_BASE}/checklist/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return { error: 'Failed to delete item.' };
+    return {};
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function fetchApplicationChecklist(applicationId, token) {
+  try {
+    const res = await fetch(`${API_BASE}/checklist/application/${applicationId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return { error: await res.text() || 'Failed to load checklist.' };
+    return await res.json();
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function generateApplicationChecklist(applicationId, token) {
+  try {
+    const res = await fetch(`${API_BASE}/checklist/application/${applicationId}/generate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return { error: 'Failed to generate checklist.' };
+    return {};
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function respondToChecklistItem(itemId, text, token) {
+  try {
+    const res = await fetch(`${API_BASE}/checklist/application/item/${itemId}/respond`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ text })
+    });
+    if (!res.ok) return { error: 'Failed to save response.' };
+    return {};
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function uploadChecklistDocument(itemId, file, token) {
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${API_BASE}/checklist/application/item/${itemId}/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form
+    });
+    if (!res.ok) return { error: 'Failed to upload document.' };
+    return {};
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function updateChecklistItemStatus(itemId, status, token) {
+  try {
+    const res = await fetch(`${API_BASE}/checklist/application/item/${itemId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) { const b = await res.json().catch(() => ({})); return { error: b.error || 'Failed to update status.' }; }
+    return {};
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function addChecklistComment(itemId, comment, token) {
+  try {
+    const res = await fetch(`${API_BASE}/checklist/application/item/${itemId}/comment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ comment })
+    });
+    if (!res.ok) { const b = await res.json().catch(() => ({})); return { error: b.error || 'Failed to add comment.' }; }
+    return {};
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function evaluateRules(formSchemaId, formData, token, applicationId = null, currentStageId = null) {
+  try {
+    const res = await fetch(`${API_BASE}/rules/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ formSchemaId, formData, applicationId, currentStageId })
+    });
+    return res.ok ? await res.json() : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
+}
+
+export async function fetchRuleOutcomes(applicationId, token) {
+  try {
+    const res = await fetch(`${API_BASE}/rules/outcomes/${applicationId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return res.ok ? await res.json() : { error: await res.text() };
+  } catch (e) { return { error: e.message }; }
 }

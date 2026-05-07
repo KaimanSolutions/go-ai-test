@@ -29,7 +29,7 @@
   function transId() { return `tr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`; }
 
   function newStage(order) {
-    return { _id: uid(), name: '', description: '', isInitial: order === 0, isFinal: false, order, tasks: [], transitionsOut: [] };
+    return { _id: uid(), dbId: null, name: '', description: '', isInitial: order === 0, isFinal: false, order, tasks: [], transitionsOut: [] };
   }
 
   // ── List operations ─────────────────────────────────────────────────────────
@@ -65,7 +65,8 @@
       idMap[s.id] = _id;
       return {
         _id,
-        name: s.name,
+        dbId:      s.id,
+        name:      s.name,
         description: s.description ?? '',
         isInitial: s.isInitial,
         isFinal:   s.isFinal,
@@ -193,6 +194,7 @@
       description: wfDescription.trim() || null,
       stages: stages.map((s, i) => ({
         tempId:      s._id,
+        dbId:        s.dbId ?? null,
         name:        s.name.trim(),
         description: s.description.trim() || null,
         order:       i,

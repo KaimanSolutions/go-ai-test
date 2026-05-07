@@ -18,6 +18,20 @@ public sealed class RegistrationRequest
     public int?   CompanyId     { get; set; }
 }
 
+public sealed class UpdateProfileRequest
+{
+    public string? FirstName   { get; set; }
+    public string? LastName    { get; set; }
+    public string? Phone       { get; set; }
+    public string? JobTitle    { get; set; }
+    public string? Department  { get; set; }
+}
+
+public sealed class LockoutRequest
+{
+    public bool Locked { get; set; }
+}
+
 public sealed class AuthResponse
 {
     public string  AccessToken { get; set; } = string.Empty;

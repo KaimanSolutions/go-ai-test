@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace FormBuilder.Backend;
 
@@ -6,20 +8,42 @@ namespace FormBuilder.Backend;
 [Route("api/[controller]")]
 public sealed class CompanyController : ControllerBase
 {
-    private readonly CompanyService    _companyService;
-    private readonly FcaLookupService  _fcaLookupService;
+    private readonly CompanyService     _companyService;
+    private readonly FcaLookupService   _fcaLookupService;
+    private readonly UserAccountService _userAccountService;
 
-    public CompanyController(CompanyService companyService, FcaLookupService fcaLookupService)
+    public CompanyController(CompanyService companyService, FcaLookupService fcaLookupService, UserAccountService userAccountService)
     {
-        _companyService   = companyService;
-        _fcaLookupService = fcaLookupService;
+        _companyService     = companyService;
+        _fcaLookupService   = fcaLookupService;
+        _userAccountService = userAccountService;
+    }
+
+    [Authorize]
+    [HttpGet("mine")]
+    public IActionResult GetMine()
+    {
+        var email = User.Claims.FirstOrDefault(c =>
+            c.Type == System.Security.Claims.ClaimTypes.Email ||
+            c.Type == JwtRegisteredClaimNames.Email)?.Value;
+
+        if (email is null) return Unauthorized();
+
+        var user = _userAccountService.GetByEmail(email);
+        if (user is null) return NotFound("User account not found.");
+        if (user.CompanyId is null) return NotFound("You are not linked to a company.");
+
+        var company = _companyService.GetDetail(user.CompanyId.Value);
+        if (company is null) return NotFound("Company not found.");
+        return Ok(company);
     }
 
     [HttpGet]
     public IActionResult GetAll() => Ok(_companyService.GetAll());
 
     [HttpGet("brokers")]
-    public IActionResult GetBrokers() => Ok(_companyService.GetBrokers());
+    public IActionResult GetBrokers([FromQuery] string? fca = null) =>
+        Ok(_companyService.GetBrokers(fca));
 
     [HttpGet("networks")]
     public IActionResult GetNetworks() => Ok(_companyService.GetNetworks());

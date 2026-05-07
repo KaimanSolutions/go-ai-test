@@ -19,6 +19,10 @@ public sealed class FormBuilderController : ControllerBase
     [HttpGet("schemas")]
     public IActionResult GetSchemas() => Ok(_schemaService.GetAllSchemas());
 
+    [Authorize]
+    [HttpGet("schemas/archived")]
+    public IActionResult GetArchivedSchemas() => Ok(_schemaService.GetArchivedSchemas());
+
     [HttpGet("schema/{id}")]
     public IActionResult GetSchema(string id)
     {
@@ -39,13 +43,32 @@ public sealed class FormBuilderController : ControllerBase
     }
 
     [Authorize]
+    [HttpPatch("schema/{id}/workflow")]
+    public IActionResult LinkWorkflow(string id, [FromBody] LinkWorkflowRequest request)
+    {
+        var (success, error) = _schemaService.LinkWorkflow(id, request.WorkflowId);
+        if (!success) return BadRequest(error);
+        return NoContent();
+    }
+
+    [Authorize]
     [HttpDelete("schema/{id}")]
     public IActionResult DeleteSchema(string id)
     {
         if (_schemaService.GetSchema(id) is null)
             return NotFound($"Schema '{id}' not found.");
 
-        _schemaService.DeleteSchema(id);
+        _schemaService.ArchiveSchema(id);
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpPost("schema/{id}/restore")]
+    public IActionResult RestoreSchema(string id)
+    {
+        if (!_schemaService.UnarchiveSchema(id))
+            return NotFound($"Archived schema '{id}' not found.");
+
         return NoContent();
     }
 

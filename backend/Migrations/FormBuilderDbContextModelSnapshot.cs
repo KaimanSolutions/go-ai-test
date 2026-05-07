@@ -22,7 +22,7 @@ namespace Backend.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.Address", b =>
+            modelBuilder.Entity("FormBuilder.Backend.Address", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -106,7 +106,7 @@ namespace Backend.Migrations
                     b.ToTable("Addresses");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.ApiRequestLog", b =>
+            modelBuilder.Entity("FormBuilder.Backend.ApiRequestLog", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -152,7 +152,81 @@ namespace Backend.Migrations
                     b.ToTable("ApiRequestLogs");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.BankDetails", b =>
+            modelBuilder.Entity("FormBuilder.Backend.Application", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BrokerId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CurrentStageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FormData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FormSchemaId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("FormSchemaVersion")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("NetworkId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PublicReference")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("WorkflowId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BrokerId");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("CurrentStageId");
+
+                    b.HasIndex("FormSchemaId");
+
+                    b.HasIndex("NetworkId");
+
+                    b.HasIndex("PublicReference")
+                        .IsUnique();
+
+                    b.HasIndex("WorkflowId");
+
+                    b.ToTable("Applications");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.BankDetails", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -193,7 +267,7 @@ namespace Backend.Migrations
                     b.ToTable("BankDetails");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.BrandingSettings", b =>
+            modelBuilder.Entity("FormBuilder.Backend.BrandingSettings", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -244,17 +318,13 @@ namespace Backend.Migrations
                     b.ToTable("BrandingSettings");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.Company", b =>
+            modelBuilder.Entity("FormBuilder.Backend.Company", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -296,7 +366,139 @@ namespace Backend.Migrations
                     b.ToTable("Companies");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FieldCondition", b =>
+            modelBuilder.Entity("FormBuilder.Backend.BusinessRule", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<DateTime>("CreatedAt").HasColumnType("datetime2");
+                    b.Property<string>("BrokerDescription").HasColumnType("nvarchar(max)");
+                    b.Property<string>("ClientDescription").HasColumnType("nvarchar(max)");
+                    b.Property<string>("DecisionType").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)").HasDefaultValue("Decline");
+                    b.Property<string>("Description").HasColumnType("nvarchar(max)");
+                    b.Property<string>("FormSchemaId").HasColumnType("nvarchar(450)");
+                    b.Property<bool>("IsActive").HasColumnType("bit");
+                    b.Property<bool>("IsBrokerVisible").HasColumnType("bit");
+                    b.Property<bool>("IsClientVisible").HasColumnType("bit");
+                    b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
+                    b.Property<string>("RuleReference").IsRequired().HasMaxLength(50).HasColumnType("nvarchar(50)");
+                    b.HasKey("Id");
+                    b.HasIndex("FormSchemaId");
+                    b.HasIndex("RuleReference").IsUnique();
+                    b.ToTable("BusinessRules");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.RuleCondition", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<int>("BusinessRuleId").HasColumnType("int");
+                    b.Property<int>("ConditionGroup").HasColumnType("int");
+                    b.Property<string>("FailMessage").HasColumnType("nvarchar(max)");
+                    b.Property<string>("LeftExpression").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<string>("Operator").IsRequired().HasMaxLength(10).HasColumnType("nvarchar(10)");
+                    b.Property<int>("Order").HasColumnType("int");
+                    b.Property<string>("RightExpression").IsRequired().HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
+                    b.HasIndex("BusinessRuleId");
+                    b.ToTable("RuleConditions");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.RuleOutcome", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<int>("ApplicationId").HasColumnType("int");
+                    b.Property<int>("BusinessRuleId").HasColumnType("int");
+                    b.Property<string>("FailReasons").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<bool>("Passed").HasColumnType("bit");
+                    b.Property<DateTime>("RecordedAt").HasColumnType("datetime2");
+                    b.Property<int?>("StageId").HasColumnType("int");
+                    b.Property<string>("StageName").HasMaxLength(200).HasColumnType("nvarchar(200)");
+                    b.HasKey("Id");
+                    b.HasIndex("ApplicationId");
+                    b.HasIndex("BusinessRuleId");
+                    b.ToTable("RuleOutcomes");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.Template", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("Content").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("CreatedAt").HasColumnType("datetime2");
+                    b.Property<string>("Description").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsActive").HasColumnType("bit");
+                    b.Property<string>("Name").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<string>("Subject").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<string>("TemplateType").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)");
+                    b.Property<DateTime>("UpdatedAt").HasColumnType("datetime2");
+                    b.HasKey("Id");
+                    b.ToTable("Templates");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.ApplicationChecklistComment", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<int>("ApplicationChecklistItemId").HasColumnType("int");
+                    b.Property<string>("AuthorName").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<string>("Comment").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("CreatedAt").HasColumnType("datetime2");
+                    b.HasKey("Id");
+                    b.HasIndex("ApplicationChecklistItemId");
+                    b.ToTable("ApplicationChecklistComments");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.ApplicationChecklistItem", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<int>("ApplicationId").HasColumnType("int");
+                    b.Property<int>("ChecklistItemId").HasColumnType("int");
+                    b.Property<DateTime?>("CompletedAt").HasColumnType("datetime2");
+                    b.Property<string>("DocumentContentType").HasColumnType("nvarchar(max)");
+                    b.Property<string>("DocumentName").HasColumnType("nvarchar(max)");
+                    b.Property<string>("DocumentPath").HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("GeneratedAt").HasColumnType("datetime2");
+                    b.Property<string>("Status").IsRequired().HasMaxLength(20).HasDefaultValue("Outstanding").HasColumnType("nvarchar(20)");
+                    b.Property<string>("TextResponse").HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
+                    b.HasIndex("ApplicationId");
+                    b.HasIndex("ChecklistItemId");
+                    b.ToTable("ApplicationChecklistItems");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.ChecklistItem", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<DateTime>("CreatedAt").HasColumnType("datetime2");
+                    b.Property<string>("Description").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<string>("FormSchemaId").HasColumnType("nvarchar(450)");
+                    b.Property<bool>("IsActive").HasColumnType("bit");
+                    b.Property<bool>("IsBrokerVisible").HasColumnType("bit");
+                    b.Property<bool>("IsClientVisible").HasColumnType("bit");
+                    b.Property<string>("ItemType").IsRequired().HasMaxLength(20).HasColumnType("nvarchar(20)");
+                    b.Property<string>("Name").IsRequired().HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
+                    b.HasIndex("FormSchemaId");
+                    b.ToTable("ChecklistItems");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.ChecklistCondition", b =>
+                {
+                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<int>("ChecklistItemId").HasColumnType("int");
+                    b.Property<string>("FieldName").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<string>("Operator").IsRequired().HasColumnType("nvarchar(max)");
+                    b.Property<string>("Value").IsRequired().HasColumnType("nvarchar(max)");
+                    b.HasKey("Id");
+                    b.HasIndex("ChecklistItemId");
+                    b.ToTable("ChecklistConditions");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.FieldCondition", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -318,6 +520,9 @@ namespace Backend.Migrations
                     b.Property<int?>("ValidationRuleId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FormFieldId");
@@ -327,7 +532,7 @@ namespace Backend.Migrations
                     b.ToTable("FieldConditions");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FormField", b =>
+            modelBuilder.Entity("FormBuilder.Backend.FormField", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -364,6 +569,9 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("InfoVariant")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FormStepId");
@@ -371,7 +579,7 @@ namespace Backend.Migrations
                     b.ToTable("FormFields");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FormSchema", b =>
+            modelBuilder.Entity("FormBuilder.Backend.FormSchema", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -384,18 +592,36 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("WorkflowId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsArchived")
+                        .HasDefaultValue(false)
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("ArchivedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("WorkflowId");
 
                     b.ToTable("FormSchemas");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FormStep", b =>
+            modelBuilder.Entity("FormBuilder.Backend.FormStep", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Conditions")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FormSchemaId")
                         .HasColumnType("nvarchar(450)");
@@ -411,7 +637,7 @@ namespace Backend.Migrations
                     b.ToTable("FormSteps");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.HelpArticle", b =>
+            modelBuilder.Entity("FormBuilder.Backend.HelpArticle", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -450,32 +676,7 @@ namespace Backend.Migrations
                     b.ToTable("HelpArticles");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.ProfileSettings", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Department")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("JobTitle")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ProfileSettings");
-                });
-
-            modelBuilder.Entity("FormBuilder.Backend.Models.IntegrationSetting", b =>
+            modelBuilder.Entity("FormBuilder.Backend.IntegrationSetting", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -485,20 +686,18 @@ namespace Backend.Migrations
 
                     b.Property<string>("Integration")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -508,7 +707,7 @@ namespace Backend.Migrations
                     b.ToTable("IntegrationSettings");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.TradingName", b =>
+            modelBuilder.Entity("FormBuilder.Backend.TradingName", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -542,7 +741,7 @@ namespace Backend.Migrations
                     b.ToTable("TradingNames");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.UserAccount", b =>
+            modelBuilder.Entity("FormBuilder.Backend.UserAccount", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -556,12 +755,21 @@ namespace Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Department")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsLockedOut")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("JobTitle")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
@@ -597,7 +805,7 @@ namespace Backend.Migrations
                     b.ToTable("UserAccounts");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.ValidationRule", b =>
+            modelBuilder.Entity("FormBuilder.Backend.ValidationRule", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -616,6 +824,9 @@ namespace Backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FormFieldId");
@@ -623,9 +834,204 @@ namespace Backend.Migrations
                     b.ToTable("ValidationRules");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.Address", b =>
+            modelBuilder.Entity("FormBuilder.Backend.Workflow", b =>
                 {
-                    b.HasOne("FormBuilder.Backend.Models.Company", "Company")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Workflows");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.WorkflowStage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsFinal")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsInitial")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkflowId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkflowId");
+
+                    b.ToTable("WorkflowStages");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.WorkflowTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Required")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("StageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StageId");
+
+                    b.ToTable("WorkflowTasks");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.WorkflowTransition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Condition")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FromStageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("ToStageId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkflowId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromStageId");
+
+                    b.HasIndex("ToStageId");
+
+                    b.HasIndex("WorkflowId");
+
+                    b.ToTable("WorkflowTransitions");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.BusinessRule", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.FormSchema", "FormSchema").WithMany().HasForeignKey("FormSchemaId").OnDelete(DeleteBehavior.SetNull);
+                    b.Navigation("FormSchema");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.RuleCondition", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.BusinessRule", null).WithMany("Conditions").HasForeignKey("BusinessRuleId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.RuleOutcome", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.Application", null).WithMany().HasForeignKey("ApplicationId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.HasOne("FormBuilder.Backend.BusinessRule", "BusinessRule").WithMany().HasForeignKey("BusinessRuleId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+                    b.Navigation("BusinessRule");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.ApplicationChecklistComment", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.ApplicationChecklistItem", null)
+                        .WithMany("Comments")
+                        .HasForeignKey("ApplicationChecklistItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.ApplicationChecklistItem", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.Application", null)
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FormBuilder.Backend.ChecklistItem", "ChecklistItem")
+                        .WithMany()
+                        .HasForeignKey("ChecklistItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChecklistItem");
+                    b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.ChecklistItem", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.FormSchema", "FormSchema")
+                        .WithMany()
+                        .HasForeignKey("FormSchemaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                    b.Navigation("FormSchema");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.ChecklistCondition", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.ChecklistItem", null)
+                        .WithMany("Conditions")
+                        .HasForeignKey("ChecklistItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.ChecklistItem", b =>
+                {
+                    b.Navigation("Conditions");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.Address", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.Company", "Company")
                         .WithMany("Addresses")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -634,9 +1040,62 @@ namespace Backend.Migrations
                     b.Navigation("Company");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.BankDetails", b =>
+            modelBuilder.Entity("FormBuilder.Backend.Application", b =>
                 {
-                    b.HasOne("FormBuilder.Backend.Models.Company", "Company")
+                    b.HasOne("FormBuilder.Backend.UserAccount", "Broker")
+                        .WithMany()
+                        .HasForeignKey("BrokerId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FormBuilder.Backend.UserAccount", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FormBuilder.Backend.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FormBuilder.Backend.WorkflowStage", "CurrentStage")
+                        .WithMany()
+                        .HasForeignKey("CurrentStageId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FormBuilder.Backend.FormSchema", "FormSchema")
+                        .WithMany()
+                        .HasForeignKey("FormSchemaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FormBuilder.Backend.Company", "Network")
+                        .WithMany()
+                        .HasForeignKey("NetworkId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("FormBuilder.Backend.Workflow", "Workflow")
+                        .WithMany()
+                        .HasForeignKey("WorkflowId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Broker");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("Company");
+
+                    b.Navigation("CurrentStage");
+
+                    b.Navigation("FormSchema");
+
+                    b.Navigation("Network");
+
+                    b.Navigation("Workflow");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.BankDetails", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.Company", "Company")
                         .WithMany("BankAccounts")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -645,9 +1104,9 @@ namespace Backend.Migrations
                     b.Navigation("Company");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.Company", b =>
+            modelBuilder.Entity("FormBuilder.Backend.Company", b =>
                 {
-                    b.HasOne("FormBuilder.Backend.Models.Company", "ParentCompany")
+                    b.HasOne("FormBuilder.Backend.Company", "ParentCompany")
                         .WithMany("ChildCompanies")
                         .HasForeignKey("ParentCompanyId")
                         .OnDelete(DeleteBehavior.NoAction);
@@ -655,37 +1114,47 @@ namespace Backend.Migrations
                     b.Navigation("ParentCompany");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FieldCondition", b =>
+            modelBuilder.Entity("FormBuilder.Backend.FieldCondition", b =>
                 {
-                    b.HasOne("FormBuilder.Backend.Models.FormField", null)
+                    b.HasOne("FormBuilder.Backend.FormField", null)
                         .WithMany("Conditions")
                         .HasForeignKey("FormFieldId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("FormBuilder.Backend.Models.ValidationRule", null)
+                    b.HasOne("FormBuilder.Backend.ValidationRule", null)
                         .WithMany("Conditions")
                         .HasForeignKey("ValidationRuleId");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FormField", b =>
+            modelBuilder.Entity("FormBuilder.Backend.FormField", b =>
                 {
-                    b.HasOne("FormBuilder.Backend.Models.FormStep", null)
+                    b.HasOne("FormBuilder.Backend.FormStep", null)
                         .WithMany("Fields")
                         .HasForeignKey("FormStepId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FormStep", b =>
+            modelBuilder.Entity("FormBuilder.Backend.FormSchema", b =>
                 {
-                    b.HasOne("FormBuilder.Backend.Models.FormSchema", null)
+                    b.HasOne("FormBuilder.Backend.Workflow", "Workflow")
+                        .WithMany()
+                        .HasForeignKey("WorkflowId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Workflow");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.FormStep", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.FormSchema", null)
                         .WithMany("Steps")
                         .HasForeignKey("FormSchemaId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.TradingName", b =>
+            modelBuilder.Entity("FormBuilder.Backend.TradingName", b =>
                 {
-                    b.HasOne("FormBuilder.Backend.Models.Company", "Company")
+                    b.HasOne("FormBuilder.Backend.Company", "Company")
                         .WithMany("TradingNames")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -694,9 +1163,9 @@ namespace Backend.Migrations
                     b.Navigation("Company");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.UserAccount", b =>
+            modelBuilder.Entity("FormBuilder.Backend.UserAccount", b =>
                 {
-                    b.HasOne("FormBuilder.Backend.Models.Company", "Company")
+                    b.HasOne("FormBuilder.Backend.Company", "Company")
                         .WithMany("Brokers")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -704,15 +1173,67 @@ namespace Backend.Migrations
                     b.Navigation("Company");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.ValidationRule", b =>
+            modelBuilder.Entity("FormBuilder.Backend.ValidationRule", b =>
                 {
-                    b.HasOne("FormBuilder.Backend.Models.FormField", null)
+                    b.HasOne("FormBuilder.Backend.FormField", null)
                         .WithMany("Validators")
                         .HasForeignKey("FormFieldId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.Company", b =>
+            modelBuilder.Entity("FormBuilder.Backend.WorkflowStage", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.Workflow", "Workflow")
+                        .WithMany("Stages")
+                        .HasForeignKey("WorkflowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Workflow");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.WorkflowTask", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.WorkflowStage", "Stage")
+                        .WithMany("Tasks")
+                        .HasForeignKey("StageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Stage");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.WorkflowTransition", b =>
+                {
+                    b.HasOne("FormBuilder.Backend.WorkflowStage", "FromStage")
+                        .WithMany("TransitionsOut")
+                        .HasForeignKey("FromStageId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("FormBuilder.Backend.WorkflowStage", "ToStage")
+                        .WithMany()
+                        .HasForeignKey("ToStageId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("FormBuilder.Backend.Workflow", null)
+                        .WithMany()
+                        .HasForeignKey("WorkflowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FromStage");
+
+                    b.Navigation("ToStage");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.BusinessRule", b =>
+                {
+                    b.Navigation("Conditions");
+                });
+
+            modelBuilder.Entity("FormBuilder.Backend.Company", b =>
                 {
                     b.Navigation("Addresses");
 
@@ -725,96 +1246,39 @@ namespace Backend.Migrations
                     b.Navigation("TradingNames");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FormField", b =>
+            modelBuilder.Entity("FormBuilder.Backend.FormField", b =>
                 {
                     b.Navigation("Conditions");
 
                     b.Navigation("Validators");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FormSchema", b =>
+            modelBuilder.Entity("FormBuilder.Backend.FormSchema", b =>
                 {
                     b.Navigation("Steps");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.FormStep", b =>
+            modelBuilder.Entity("FormBuilder.Backend.FormStep", b =>
                 {
                     b.Navigation("Fields");
                 });
 
-            modelBuilder.Entity("FormBuilder.Backend.Models.ValidationRule", b =>
+            modelBuilder.Entity("FormBuilder.Backend.ValidationRule", b =>
                 {
                     b.Navigation("Conditions");
                 });
 
             modelBuilder.Entity("FormBuilder.Backend.Workflow", b =>
                 {
-                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-                    b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
-                    b.Property<string>("Description").HasColumnType("nvarchar(max)");
-                    b.Property<DateTime>("CreatedAt").HasColumnType("datetime2");
-                    b.HasKey("Id");
-                    b.ToTable("Workflows");
                     b.Navigation("Stages");
                 });
 
             modelBuilder.Entity("FormBuilder.Backend.WorkflowStage", b =>
                 {
-                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-                    b.Property<int>("WorkflowId").HasColumnType("int");
-                    b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
-                    b.Property<string>("Description").HasColumnType("nvarchar(max)");
-                    b.Property<int>("Order").HasColumnType("int");
-                    b.Property<bool>("IsInitial").HasColumnType("bit");
-                    b.Property<bool>("IsFinal").HasColumnType("bit");
-                    b.HasKey("Id");
-                    b.HasIndex("WorkflowId");
-                    b.ToTable("WorkflowStages");
-                    b.HasOne("FormBuilder.Backend.Workflow", "Workflow").WithMany("Stages").HasForeignKey("WorkflowId").OnDelete(DeleteBehavior.Cascade).IsRequired();
-                    b.Navigation("Workflow");
                     b.Navigation("Tasks");
+
                     b.Navigation("TransitionsOut");
                 });
-
-            modelBuilder.Entity("FormBuilder.Backend.WorkflowTask", b =>
-                {
-                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-                    b.Property<int>("StageId").HasColumnType("int");
-                    b.Property<string>("Title").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
-                    b.Property<string>("Description").HasColumnType("nvarchar(max)");
-                    b.Property<bool>("Required").HasColumnType("bit");
-                    b.Property<int>("Order").HasColumnType("int");
-                    b.HasKey("Id");
-                    b.HasIndex("StageId");
-                    b.ToTable("WorkflowTasks");
-                    b.HasOne("FormBuilder.Backend.WorkflowStage", "Stage").WithMany("Tasks").HasForeignKey("StageId").OnDelete(DeleteBehavior.Cascade).IsRequired();
-                    b.Navigation("Stage");
-                });
-
-            modelBuilder.Entity("FormBuilder.Backend.WorkflowTransition", b =>
-                {
-                    b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int");
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-                    b.Property<int>("WorkflowId").HasColumnType("int");
-                    b.Property<int>("FromStageId").HasColumnType("int");
-                    b.Property<int>("ToStageId").HasColumnType("int");
-                    b.Property<string>("Label").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
-                    b.Property<string>("Condition").HasColumnType("nvarchar(max)");
-                    b.HasKey("Id");
-                    b.HasIndex("FromStageId");
-                    b.HasIndex("ToStageId");
-                    b.HasIndex("WorkflowId");
-                    b.ToTable("WorkflowTransitions");
-                    b.HasOne("FormBuilder.Backend.WorkflowStage", "FromStage").WithMany("TransitionsOut").HasForeignKey("FromStageId").OnDelete(DeleteBehavior.NoAction).IsRequired();
-                    b.HasOne("FormBuilder.Backend.WorkflowStage", "ToStage").WithMany().HasForeignKey("ToStageId").OnDelete(DeleteBehavior.NoAction).IsRequired();
-                    b.HasOne("FormBuilder.Backend.Workflow", null).WithMany().HasForeignKey("WorkflowId").OnDelete(DeleteBehavior.Cascade).IsRequired();
-                    b.Navigation("FromStage");
-                    b.Navigation("ToStage");
-                });
-
 #pragma warning restore 612, 618
         }
     }

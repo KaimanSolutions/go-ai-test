@@ -16,7 +16,6 @@ public sealed class FormBuilderDbContext : DbContext
     public DbSet<FieldCondition>   FieldConditions    { get; set; }
     public DbSet<HelpArticle>      HelpArticles       { get; set; }
     public DbSet<BrandingSettings> BrandingSettings   { get; set; }
-    public DbSet<ProfileSettings>  ProfileSettings    { get; set; }
     public DbSet<UserAccount>      UserAccounts       { get; set; }
     public DbSet<Company>          Companies          { get; set; }
     public DbSet<Address>          Addresses          { get; set; }
@@ -28,6 +27,15 @@ public sealed class FormBuilderDbContext : DbContext
     public DbSet<WorkflowStage>       WorkflowStages       { get; set; }
     public DbSet<WorkflowTask>        WorkflowTasks        { get; set; }
     public DbSet<WorkflowTransition>  WorkflowTransitions  { get; set; }
+    public DbSet<Application>         Applications         { get; set; }
+    public DbSet<BusinessRule>        BusinessRules        { get; set; }
+    public DbSet<RuleCondition>       RuleConditions       { get; set; }
+    public DbSet<RuleOutcome>         RuleOutcomes         { get; set; }
+    public DbSet<ChecklistItem>             ChecklistItems             { get; set; }
+    public DbSet<ChecklistCondition>        ChecklistConditions        { get; set; }
+    public DbSet<ApplicationChecklistItem>   ApplicationChecklistItems   { get; set; }
+    public DbSet<ApplicationChecklistComment> ApplicationChecklistComments { get; set; }
+    public DbSet<Template>                   Templates                   { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -44,6 +52,12 @@ public sealed class FormBuilderDbContext : DbContext
             .HasMany(f => f.Steps).WithOne()
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<FormSchema>()
+            .HasOne(f => f.Workflow)
+            .WithMany()
+            .HasForeignKey(f => f.WorkflowId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         modelBuilder.Entity<FormStep>()
             .HasMany(s => s.Fields).WithOne()
             .OnDelete(DeleteBehavior.Cascade);
@@ -57,8 +71,6 @@ public sealed class FormBuilderDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<FormField>().Ignore(f => f.DefaultValue);
-        modelBuilder.Entity<FieldCondition>().Ignore(c => c.Value);
-        modelBuilder.Entity<ValidationRule>().Ignore(v => v.Value);
 
         var stringListComparer = new ValueComparer<List<string>>(
             (c1, c2) => c1 == null && c2 == null || c1 != null && c2 != null && c1.SequenceEqual(c2),
@@ -84,14 +96,24 @@ public sealed class FormBuilderDbContext : DbContext
                 v => string.IsNullOrEmpty(v) ? new List<SubFieldDefinition>() : JsonSerializer.Deserialize<List<SubFieldDefinition>>(v, (JsonSerializerOptions?)null) ?? new List<SubFieldDefinition>())
             .Metadata.SetValueComparer(subFieldListComparer);
 
+        var stepCondListComparer = new ValueComparer<List<StepConditionDef>>(
+            (c1, c2) => c1 == null && c2 == null || (c1 != null && c2 != null && JsonSerializer.Serialize(c1) == JsonSerializer.Serialize(c2)),
+            c => c == null ? 0 : JsonSerializer.Serialize(c).GetHashCode(),
+            c => c == null ? new List<StepConditionDef>() : JsonSerializer.Deserialize<List<StepConditionDef>>(JsonSerializer.Serialize(c), (JsonSerializerOptions?)null) ?? new List<StepConditionDef>());
+
+        modelBuilder.Entity<FormStep>()
+            .Property(s => s.Conditions)
+            .IsRequired(false)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v ?? new List<StepConditionDef>(), (JsonSerializerOptions?)null),
+                v => string.IsNullOrEmpty(v) ? new List<StepConditionDef>() : JsonSerializer.Deserialize<List<StepConditionDef>>(v, (JsonSerializerOptions?)null) ?? new List<StepConditionDef>())
+            .Metadata.SetValueComparer(stepCondListComparer);
+
         modelBuilder.Entity<HelpArticle>()
             .HasKey(a => a.Id).IsClustered();
 
         modelBuilder.Entity<BrandingSettings>()
             .HasKey(b => b.Id).IsClustered();
-
-        modelBuilder.Entity<ProfileSettings>()
-            .HasKey(p => p.Id);
 
         modelBuilder.Entity<UserAccount>()
             .HasKey(u => u.Id);
@@ -181,6 +203,57 @@ public sealed class FormBuilderDbContext : DbContext
             .HasForeignKey(t => t.WorkflowId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Applications
+        modelBuilder.Entity<Application>()
+            .HasKey(a => a.Id);
+
+        modelBuilder.Entity<Application>()
+            .HasIndex(a => a.PublicReference).IsUnique();
+
+        modelBuilder.Entity<Application>()
+            .HasOne(a => a.FormSchema)
+            .WithMany()
+            .HasForeignKey(a => a.FormSchemaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // NoAction on all user/company FKs: SQL Server rejects multiple SET NULL cascade
+        // paths from the same principal table to the same dependent table.
+        modelBuilder.Entity<Application>()
+            .HasOne(a => a.Client)
+            .WithMany()
+            .HasForeignKey(a => a.ClientId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Application>()
+            .HasOne(a => a.Broker)
+            .WithMany()
+            .HasForeignKey(a => a.BrokerId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Application>()
+            .HasOne(a => a.Company)
+            .WithMany()
+            .HasForeignKey(a => a.CompanyId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Application>()
+            .HasOne(a => a.Network)
+            .WithMany()
+            .HasForeignKey(a => a.NetworkId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Application>()
+            .HasOne(a => a.Workflow)
+            .WithMany()
+            .HasForeignKey(a => a.WorkflowId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Application>()
+            .HasOne(a => a.CurrentStage)
+            .WithMany()
+            .HasForeignKey(a => a.CurrentStageId)
+            .OnDelete(DeleteBehavior.NoAction);
+
         // Royal Mail address field lengths (enforced at DB level)
         var addr = modelBuilder.Entity<Address>();
         addr.Property(a => a.OrganisationName).HasMaxLength(60);
@@ -198,5 +271,84 @@ public sealed class FormBuilderDbContext : DbContext
         addr.Property(a => a.Postcode).HasMaxLength(8);
         addr.Property(a => a.POBox).HasMaxLength(6);
         addr.Property(a => a.Country).HasMaxLength(60);
+
+        // Business rules
+        modelBuilder.Entity<BusinessRule>()
+            .HasOne(r => r.FormSchema)
+            .WithMany()
+            .HasForeignKey(r => r.FormSchemaId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<BusinessRule>()
+            .Property(r => r.DecisionType)
+            .HasMaxLength(20)
+            .HasDefaultValue("Decline");
+
+        modelBuilder.Entity<BusinessRule>()
+            .HasMany(r => r.Conditions)
+            .WithOne()
+            .HasForeignKey(c => c.BusinessRuleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RuleOutcome>()
+            .HasOne(o => o.BusinessRule)
+            .WithMany()
+            .HasForeignKey(o => o.BusinessRuleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RuleOutcome>()
+            .HasOne<Application>()
+            .WithMany()
+            .HasForeignKey(o => o.ApplicationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ChecklistItem>()
+            .HasKey(i => i.Id);
+
+        modelBuilder.Entity<ChecklistItem>()
+            .HasOne(i => i.FormSchema)
+            .WithMany()
+            .HasForeignKey(i => i.FormSchemaId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<ChecklistItem>()
+            .HasMany(i => i.Conditions)
+            .WithOne()
+            .HasForeignKey(c => c.ChecklistItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ChecklistCondition>()
+            .HasKey(c => c.Id);
+
+        modelBuilder.Entity<ApplicationChecklistItem>()
+            .HasKey(a => a.Id);
+
+        modelBuilder.Entity<ApplicationChecklistItem>()
+            .HasOne(a => a.ChecklistItem)
+            .WithMany()
+            .HasForeignKey(a => a.ChecklistItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ApplicationChecklistItem>()
+            .HasOne<Application>()
+            .WithMany()
+            .HasForeignKey(a => a.ApplicationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ApplicationChecklistComment>()
+            .HasKey(c => c.Id);
+
+        modelBuilder.Entity<ApplicationChecklistComment>()
+            .HasOne<ApplicationChecklistItem>()
+            .WithMany(a => a.Comments)
+            .HasForeignKey(c => c.ApplicationChecklistItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Template>()
+            .HasKey(t => t.Id);
+
+        modelBuilder.Entity<Template>()
+            .Property(t => t.TemplateType)
+            .HasMaxLength(20);
     }
 }

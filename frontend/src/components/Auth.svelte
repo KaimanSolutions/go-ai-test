@@ -1,12 +1,11 @@
 <script>
-  import { onMount } from 'svelte';
-  import { fetchCompanies } from '../lib/auth.js';
+  import { searchBrokerCompanies } from '../lib/auth.js';
   import CompanyRegister from './CompanyRegister.svelte';
 
   let { portal = 'Admin', onlogin = null, onregister = null, onsso = null } = $props();
 
-  let mode         = $state('login');
-  let companyView  = $state(false);   // true = show CompanyRegister page
+  let mode        = $state('login');
+  let companyView = $state(false);
 
   // Login fields
   let loginEmail    = $state('');
@@ -21,27 +20,50 @@
   let regPhone     = $state('');
   let regCompanyId = $state('');
 
-  // Company list
-  let companies        = $state([]);
-  let loadingCompanies = $state(false);
+  // FCA search
+  let fcaQuery         = $state('');
+  let fcaResults       = $state([]);
+  let fcaSearching     = $state(false);
+  let selectedCompany  = $state(null);   // { id, name, fcaNumber }
+  let showResults      = $state(false);
+  let searchTimer      = null;
 
   let error = $state('');
 
-  onMount(async () => {
-    if (portal === 'Broker') await loadCompanies();
-  });
+  function onFcaInput() {
+    clearTimeout(searchTimer);
+    selectedCompany = null;
+    regCompanyId    = '';
+    if (fcaQuery.trim().length < 2) { fcaResults = []; showResults = false; return; }
+    searchTimer = setTimeout(runFcaSearch, 300);
+  }
 
-  async function loadCompanies() {
-    loadingCompanies = true;
-    const result = await fetchCompanies();
-    loadingCompanies = false;
-    if (!result.error) companies = result;
+  async function runFcaSearch() {
+    fcaSearching = true;
+    fcaResults   = await searchBrokerCompanies(fcaQuery.trim());
+    fcaSearching = false;
+    showResults  = true;
+  }
+
+  function selectCompany(c) {
+    selectedCompany = c;
+    regCompanyId    = String(c.id);
+    fcaQuery        = c.fcaNumber;
+    fcaResults      = [];
+    showResults     = false;
+  }
+
+  function clearCompany() {
+    selectedCompany = null;
+    regCompanyId    = '';
+    fcaQuery        = '';
+    fcaResults      = [];
+    showResults     = false;
   }
 
   async function handleCompanySuccess(company) {
-    await loadCompanies();
-    regCompanyId = String(company.id);
-    companyView  = false;
+    selectCompany({ id: company.id, name: company.name, fcaNumber: company.fCANumber });
+    companyView = false;
   }
 
   function submitLogin() {
@@ -172,22 +194,68 @@
 
         {#if portal === 'Broker'}
           <div>
-            <label for="reg-company" class={lc}>Company *</label>
-            {#if loadingCompanies}
-              <p class="mt-2 text-sm text-slate-500">Loading companies…</p>
+            <label for="reg-fca" class={lc}>Company FCA number *</label>
+
+            {#if selectedCompany}
+              <!-- Selected state -->
+              <div class="mt-1.5 flex items-center justify-between rounded-xl border border-emerald-500/40 bg-emerald-500/5 px-4 py-3">
+                <div>
+                  <p class="text-sm font-semibold text-white">{selectedCompany.name}</p>
+                  <p class="mt-0.5 font-mono text-xs text-emerald-400">{selectedCompany.fcaNumber}</p>
+                </div>
+                <button type="button" onclick={clearCompany}
+                  class="ml-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-700 hover:text-white">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+                  </svg>
+                </button>
+              </div>
+
             {:else}
-              <select id="reg-company" class={ic} bind:value={regCompanyId}>
-                <option value="">Select a company…</option>
-                {#each companies as c}
-                  <option value={String(c.id)}>{c.name} — {c.fcaNumber}</option>
-                {/each}
-              </select>
-              <button type="button"
-                onclick={() => companyView = true}
-                class="mt-2 text-xs font-medium text-sky-400 transition hover:text-sky-300">
-                + Register a new company
-              </button>
+              <!-- Search input -->
+              <div class="relative mt-1.5">
+                <input
+                  id="reg-fca"
+                  type="text"
+                  class={ic}
+                  bind:value={fcaQuery}
+                  oninput={onFcaInput}
+                  placeholder="e.g. 123456"
+                  autocomplete="off"
+                />
+                {#if fcaSearching}
+                  <div class="absolute right-3.5 top-1/2 -translate-y-1/2">
+                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-sky-400"></div>
+                  </div>
+                {/if}
+
+                {#if showResults}
+                  <div class="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
+                    {#if fcaResults.length === 0}
+                      <p class="px-4 py-3 text-sm text-slate-500">No registered broker companies found for "{fcaQuery}".</p>
+                    {:else}
+                      {#each fcaResults as c}
+                        <button
+                          type="button"
+                          onclick={() => selectCompany(c)}
+                          class="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-slate-800"
+                        >
+                          <span class="text-sm font-medium text-white">{c.name}</span>
+                          <span class="ml-3 shrink-0 font-mono text-xs text-sky-400">{c.fcaNumber}</span>
+                        </button>
+                      {/each}
+                    {/if}
+                  </div>
+                {/if}
+              </div>
+              <p class="mt-1.5 text-xs text-slate-500">Type at least 2 characters of the FCA number to search.</p>
             {/if}
+
+            <button type="button"
+              onclick={() => companyView = true}
+              class="mt-2 text-xs font-medium text-sky-400 transition hover:text-sky-300">
+              + Register a new company
+            </button>
           </div>
         {/if}
 

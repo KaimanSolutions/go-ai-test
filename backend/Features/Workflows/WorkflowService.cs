@@ -76,13 +76,107 @@ public sealed class WorkflowService
             return (false, "Workflow name is required.", 0);
 
         if (existingId.HasValue)
+            return UpdateExisting(existingId.Value, request);
+
+        return CreateNew(request);
+    }
+
+    private (bool Success, string Error, int Id) UpdateExisting(int id, WorkflowSaveRequest request)
+    {
+        var workflow = _context.Workflows
+            .Include(w => w.Stages)
+                .ThenInclude(s => s.Tasks)
+            .Include(w => w.Stages)
+                .ThenInclude(s => s.TransitionsOut)
+            .FirstOrDefault(w => w.Id == id);
+
+        if (workflow is null) return (false, "Workflow not found.", 0);
+
+        workflow.Name        = request.Name.Trim();
+        workflow.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
+
+        // Clear all transitions — they'll be rebuilt after stages are saved
+        _context.WorkflowTransitions.RemoveRange(workflow.Stages.SelectMany(s => s.TransitionsOut));
+
+        // Which existing stage DB IDs are still present in the request?
+        var requestedDbIds = request.Stages
+            .Where(s => s.DbId.HasValue)
+            .Select(s => s.DbId!.Value)
+            .ToHashSet();
+
+        // Null out CurrentStageId on applications that reference stages about to be removed
+        var stagesToRemove = workflow.Stages.Where(s => !requestedDbIds.Contains(s.Id)).ToList();
+        if (stagesToRemove.Count > 0)
         {
-            var existing = _context.Workflows.Find(existingId.Value);
-            if (existing is null) return (false, "Workflow not found.", 0);
-            _context.Workflows.Remove(existing);
-            _context.SaveChanges();
+            var removedIds = stagesToRemove.Select(s => s.Id).ToList();
+            var affected = _context.Applications
+                .Where(a => a.CurrentStageId.HasValue && removedIds.Contains(a.CurrentStageId.Value))
+                .ToList();
+            foreach (var app in affected) app.CurrentStageId = null;
+            _context.WorkflowStages.RemoveRange(stagesToRemove);
         }
 
+        // TempId → stage entity map for transition building
+        var stageMap = new Dictionary<string, WorkflowStage>();
+
+        foreach (var sr in request.Stages)
+        {
+            WorkflowStage stage;
+            if (sr.DbId.HasValue)
+            {
+                stage = workflow.Stages.First(s => s.Id == sr.DbId.Value);
+            }
+            else
+            {
+                stage = new WorkflowStage { WorkflowId = workflow.Id };
+                workflow.Stages.Add(stage);
+            }
+
+            stage.Name        = sr.Name.Trim();
+            stage.Description = string.IsNullOrWhiteSpace(sr.Description) ? null : sr.Description.Trim();
+            stage.Order       = sr.Order;
+            stage.IsInitial   = sr.IsInitial;
+            stage.IsFinal     = sr.IsFinal;
+
+            _context.WorkflowTasks.RemoveRange(stage.Tasks);
+            stage.Tasks = sr.Tasks.Select((t, i) => new WorkflowTask
+            {
+                Title       = t.Title.Trim(),
+                Description = string.IsNullOrWhiteSpace(t.Description) ? null : t.Description.Trim(),
+                Required    = t.Required,
+                Order       = i
+            }).ToList();
+
+            stageMap[sr.TempId] = stage;
+        }
+
+        _context.SaveChanges(); // flush new stage IDs before creating transitions
+
+        foreach (var sr in request.Stages)
+        {
+            if (!stageMap.TryGetValue(sr.TempId, out var fromStage)) continue;
+            foreach (var tr in sr.TransitionsOut)
+            {
+                if (!stageMap.TryGetValue(tr.ToStageTempId, out var toStage)) continue;
+                if (string.IsNullOrWhiteSpace(tr.Label)) continue;
+
+                _context.WorkflowTransitions.Add(new WorkflowTransition
+                {
+                    WorkflowId  = workflow.Id,
+                    FromStageId = fromStage.Id,
+                    ToStageId   = toStage.Id,
+                    Label       = tr.Label.Trim(),
+                    Condition   = string.IsNullOrWhiteSpace(tr.Condition) ? null : tr.Condition.Trim()
+                });
+            }
+        }
+
+        _context.SaveChanges();
+        return (true, string.Empty, workflow.Id);
+    }
+
+    private (bool Success, string Error, int Id) CreateNew(WorkflowSaveRequest request)
+    {
         var workflow = new Workflow
         {
             Name        = request.Name.Trim(),
@@ -90,7 +184,6 @@ public sealed class WorkflowService
             CreatedAt   = DateTime.UtcNow
         };
 
-        // Map temp IDs → stage entities so transitions can reference them
         var stageMap = new Dictionary<string, WorkflowStage>();
 
         foreach (var sr in request.Stages)
@@ -115,13 +208,11 @@ public sealed class WorkflowService
         }
 
         _context.Workflows.Add(workflow);
-        _context.SaveChanges(); // flushes stage IDs
+        _context.SaveChanges();
 
-        // Create transitions now that all stages have real DB IDs
         foreach (var sr in request.Stages)
         {
             if (!stageMap.TryGetValue(sr.TempId, out var fromStage)) continue;
-
             foreach (var tr in sr.TransitionsOut)
             {
                 if (!stageMap.TryGetValue(tr.ToStageTempId, out var toStage)) continue;

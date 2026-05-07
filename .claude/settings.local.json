@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.cs$\")",
+      "Bash(dotnet ef *)",
+      "Bash(dotnet build *)",
+      "Bash(grep -n \"onDelete\\\\|ReferentialAction\" \"c:\\\\Users\\\\Conno\\\\OneDrive\\\\Desktop\\\\FormBuilder\\\\backend\\\\Migrations\\\\$\\(ls c:\\\\Users\\\\Conno\\\\OneDrive\\\\Desktop\\\\FormBuilder\\\\backend\\\\Migrations | grep AddApplications | grep -v Designer | tail -1\\)\")",
+      "Read(//c/Users/Conno/OneDrive/Desktop/FormBuilder/backend/Migrations$\\(ls c:/Users/Conno/OneDrive/Desktop/FormBuilder/backend/**)",
+      "Bash(Stop-Process -Id 4064 -Force)",
+      "Bash(Start-Sleep -Seconds 1)",
+      "Bash(grep -v \"^$\")",
+      "Bash(dotnet sln *)",
+      "Bash(dotnet test *)",
+      "Bash(Get-Content \"c:\\\\Users\\\\Conno\\\\OneDrive\\\\Desktop\\\\FormBuilder\\\\frontend\\\\src\\\\lib\\\\auth.js\")",
+      "Bash(Measure-Object -Line)",
+      "PowerShell(sqllocaldb info 2>&1)",
+      "PowerShell(docker --version 2>&1)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\Conno\\\\OneDrive\\\\Desktop\\\\FormBuilder\\\\backend\\\\Features\\\\Checklist\")",
+      "Bash(Select-Object Name)"
+    ]
+  }
+}

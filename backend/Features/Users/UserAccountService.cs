@@ -10,6 +10,17 @@ public sealed class UserAccountService
 
     public UserAccountService(FormBuilderDbContext context) => _context = context;
 
+    public UserAccount? GetByEmail(string email) =>
+        _context.UserAccounts.FirstOrDefault(u => u.Email == email);
+
+    public UserProfile? GetById(int id)
+    {
+        var account = _context.UserAccounts
+            .Include(u => u.Company)
+            .FirstOrDefault(u => u.Id == id);
+        return account is null ? null : ToProfile(account);
+    }
+
     public UserAccount? ValidateCredentials(string emailOrUsername, string password)
     {
         var user = _context.UserAccounts
@@ -17,7 +28,36 @@ public sealed class UserAccountService
             .FirstOrDefault(u => u.Email == emailOrUsername || u.Username == emailOrUsername);
 
         if (user is null) return null;
+        if (user.IsLockedOut) return null;
         return VerifyPassword(password, user.PasswordHash) ? user : null;
+    }
+
+    public (bool Success, string Error) SetLockout(int id, bool locked)
+    {
+        var user = _context.UserAccounts.Find(id);
+        if (user is null) return (false, "User not found.");
+        user.IsLockedOut = locked;
+        _context.SaveChanges();
+        return (true, string.Empty);
+    }
+
+    // Admin-only: creates any role including Admin
+    public (bool Success, string Error) AdminCreateUser(RegistrationRequest request)
+    {
+        var validRoles = new[] { UserRoles.Admin, UserRoles.Broker, UserRoles.Client };
+        if (!validRoles.Contains(request.Role))
+            return (false, "Role must be Admin, Broker or Client.");
+
+        return CreateAccount(request, requireCompany: request.Role == UserRoles.Broker);
+    }
+
+    public (bool Success, string Error) Delete(int id)
+    {
+        var user = _context.UserAccounts.Find(id);
+        if (user is null) return (false, "User not found.");
+        _context.UserAccounts.Remove(user);
+        _context.SaveChanges();
+        return (true, string.Empty);
     }
 
     public (bool Success, string Error) Register(RegistrationRequest request)
@@ -25,6 +65,11 @@ public sealed class UserAccountService
         if (request.Role != UserRoles.Client && request.Role != UserRoles.Broker)
             return (false, "Invalid role. Must be Client or Broker.");
 
+        return CreateAccount(request, requireCompany: request.Role == UserRoles.Broker);
+    }
+
+    private (bool Success, string Error) CreateAccount(RegistrationRequest request, bool requireCompany)
+    {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             return (false, "Email and password are required.");
 
@@ -37,7 +82,7 @@ public sealed class UserAccountService
         if (_context.UserAccounts.Any(u => u.Email == request.Email))
             return (false, "An account with this email already exists.");
 
-        if (request.Role == UserRoles.Broker)
+        if (requireCompany)
         {
             if (!request.CompanyId.HasValue)
                 return (false, "Please select a company.");
@@ -74,10 +119,37 @@ public sealed class UserAccountService
         LastName      = account.LastName,
         Phone         = string.IsNullOrEmpty(account.Phone) ? null : account.Phone,
         LicenseNumber = account.LicenseNumber,
+        JobTitle      = account.JobTitle,
+        Department    = account.Department,
         CompanyId     = account.CompanyId,
         CompanyName   = account.Company?.Name,
+        IsLockedOut   = account.IsLockedOut,
         CreatedAt     = account.CreatedAt
     };
+
+    public UserProfile? GetProfileByEmail(string email)
+    {
+        var account = _context.UserAccounts
+            .Include(u => u.Company)
+            .FirstOrDefault(u => u.Email == email);
+        return account is null ? null : ToProfile(account);
+    }
+
+    public (bool Success, string Error, UserProfile? Profile) UpdateProfileByEmail(
+        string email, UpdateProfileRequest request)
+    {
+        var account = _context.UserAccounts.FirstOrDefault(u => u.Email == email);
+        if (account is null) return (false, "User account not found.", null);
+
+        if (!string.IsNullOrWhiteSpace(request.FirstName)) account.FirstName  = request.FirstName.Trim();
+        if (!string.IsNullOrWhiteSpace(request.LastName))  account.LastName   = request.LastName.Trim();
+        if (request.Phone      is not null) account.Phone      = request.Phone.Trim();
+        if (request.JobTitle   is not null) account.JobTitle   = request.JobTitle.Trim();
+        if (request.Department is not null) account.Department = request.Department.Trim();
+
+        _context.SaveChanges();
+        return (true, string.Empty, ToProfile(account));
+    }
 
     public Dictionary<string, List<UserProfile>> GetUsersGroupedByRole()
     {
@@ -94,8 +166,11 @@ public sealed class UserAccountService
                 LastName      = u.LastName,
                 Phone         = string.IsNullOrEmpty(u.Phone) ? null : u.Phone,
                 LicenseNumber = u.LicenseNumber,
+                JobTitle      = u.JobTitle,
+                Department    = u.Department,
                 CompanyId     = u.CompanyId,
                 CompanyName   = u.Company != null ? u.Company.Name : null,
+                IsLockedOut   = u.IsLockedOut,
                 CreatedAt     = u.CreatedAt
             })
             .ToList();

@@ -21,14 +21,23 @@ public sealed class IntegrationSettingsService
             Fields:
             [
                 new CredentialField("Token", "Bearer Token", "password")
+            ]),
+
+        new IntegrationDefinition(
+            Name:        "Companies House",
+            Description: "UK Companies House public data API for company profile and registration information.",
+            Fields:
+            [
+                new CredentialField("ApiKey", "API Key", "password")
             ])
     ];
 
     private static readonly Dictionary<(string Integration, string Key), string> ConfigFallback = new()
     {
-        [("FCA Register", "Email")]  = "FcaApi:Email",
-        [("FCA Register", "ApiKey")] = "FcaApi:Key",
-        [("EPB Data",     "Token")]  = "EpcApi:Token"
+        [("FCA Register",    "Email")]  = "FcaApi:Email",
+        [("FCA Register",    "ApiKey")] = "FcaApi:Key",
+        [("EPB Data",        "Token")]  = "EpcApi:Token",
+        [("Companies House", "ApiKey")] = "CompaniesHouse:ApiKey"
     };
 
     private readonly FormBuilderDbContext _context;

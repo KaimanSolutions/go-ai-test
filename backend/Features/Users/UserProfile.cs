@@ -10,7 +10,10 @@ public sealed class UserProfile
     public string  LastName      { get; set; } = string.Empty;
     public string? Phone         { get; set; }
     public string? LicenseNumber { get; set; }
+    public string? JobTitle      { get; set; }
+    public string? Department    { get; set; }
     public int?    CompanyId     { get; set; }
     public string? CompanyName   { get; set; }
+    public bool    IsLockedOut   { get; set; }
     public DateTime CreatedAt    { get; set; }
 }

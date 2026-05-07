@@ -63,6 +63,7 @@ public sealed class WorkflowSaveRequest
 
 public sealed class WorkflowStageSaveRequest
 {
+    public int?    DbId        { get; set; }
     public string  TempId      { get; set; } = string.Empty;
     public string  Name        { get; set; } = string.Empty;
     public string? Description { get; set; }

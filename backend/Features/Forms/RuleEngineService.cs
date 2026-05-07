@@ -30,15 +30,15 @@ public sealed class RuleEngineService
                     switch (validator.RuleType.ToLowerInvariant())
                     {
                         case "min":
-                            if (!IsNumber(value, out var minValue) || minValue < Convert.ToDecimal(validator.Value ?? 0))
+                            if (!IsNumber(value, out var minValue) || (decimal.TryParse(validator.Value, out var minRule) && minValue < minRule))
                                 AddError(field.Name, message ?? $"{field.Label} does not meet minimum value.", result);
                             break;
                         case "max":
-                            if (!IsNumber(value, out var maxValue) || maxValue > Convert.ToDecimal(validator.Value ?? decimal.MaxValue))
+                            if (!IsNumber(value, out var maxValue) || (decimal.TryParse(validator.Value, out var maxRule) && maxValue > maxRule))
                                 AddError(field.Name, message ?? $"{field.Label} exceeds maximum value.", result);
                             break;
                         case "regex":
-                            if (value is string stringValue && validator.Value is string pattern && !Regex.IsMatch(stringValue, pattern))
+                            if (value is string stringValue && !string.IsNullOrEmpty(validator.Value) && !Regex.IsMatch(stringValue, validator.Value))
                                 AddError(field.Name, message ?? $"{field.Label} is invalid.", result);
                             break;
                     }

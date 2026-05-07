@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace FormBuilder.Backend;
 
@@ -8,18 +9,35 @@ namespace FormBuilder.Backend;
 [Route("api/[controller]")]
 public sealed class ProfileController : ControllerBase
 {
-    private readonly ProfileSettingsService _profileService;
+    private readonly UserAccountService _userAccountService;
 
-    public ProfileController(ProfileSettingsService profileService) =>
-        _profileService = profileService;
+    public ProfileController(UserAccountService userAccountService) =>
+        _userAccountService = userAccountService;
+
+    private string? CurrentUserEmail =>
+        User.Claims.FirstOrDefault(c =>
+            c.Type == System.Security.Claims.ClaimTypes.Email ||
+            c.Type == JwtRegisteredClaimNames.Email)?.Value;
 
     [HttpGet]
-    public IActionResult GetProfile() => Ok(_profileService.GetProfile());
+    public IActionResult GetProfile()
+    {
+        var email = CurrentUserEmail;
+        if (email is null) return Unauthorized();
+
+        var profile = _userAccountService.GetProfileByEmail(email);
+        if (profile is null) return NotFound("User account not found.");
+        return Ok(profile);
+    }
 
     [HttpPut]
-    public IActionResult UpdateProfile([FromBody] ProfileSettings profile)
+    public IActionResult UpdateProfile([FromBody] UpdateProfileRequest request)
     {
-        if (profile is null) return BadRequest("Profile data is required.");
-        return Ok(_profileService.UpdateProfile(profile));
+        var email = CurrentUserEmail;
+        if (email is null) return Unauthorized();
+
+        var (success, error, profile) = _userAccountService.UpdateProfileByEmail(email, request);
+        if (!success) return BadRequest(error);
+        return Ok(profile);
     }
 }

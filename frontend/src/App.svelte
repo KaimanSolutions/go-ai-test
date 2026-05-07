@@ -3,7 +3,7 @@
   import Auth from './components/Auth.svelte';
   import FormBuilder from './components/FormBuilder.svelte';
   import FormRenderer from './components/FormRenderer.svelte';
-  import { login, startSSO, fetchBrandingSettings, saveBrandingSettings, fetchSchemas, fetchSchema, saveSchema, validateSubmission, deleteSchema, fetchUsers } from './lib/auth.js';
+  import { login, startSSO, fetchBrandingSettings, saveBrandingSettings, fetchSchemas, fetchSchema, saveSchema, validateSubmission, deleteSchema, fetchArchivedSchemas, restoreSchema, fetchUsers, fetchWorkflows, linkWorkflowToSchema } from './lib/auth.js';
   import Settings from './components/Settings.svelte';
   import HelpCentre from './components/HelpCentre.svelte';
   import Profile from './components/Profile.svelte';
@@ -14,6 +14,11 @@
   import Users from './components/Users.svelte';
   import Integrations from './components/Integrations.svelte';
   import Workflows from './components/Workflows.svelte';
+  import Applications from './components/Applications.svelte';
+  import Rules from './components/Rules.svelte';
+  import Checklist from './components/Checklist.svelte';
+  import Templates from './components/Templates.svelte';
+  import MyCompany from './components/MyCompany.svelte';
   import { register } from './lib/auth.js';
 
   let token = $state('');
@@ -36,6 +41,8 @@
   let schema = $state(null);
   let validationResult = null;
   let schemas = $state([]);
+  let archivedSchemas = $state([]);
+  let showArchived = $state(false);
   let selectedFormId = 'loan-application';
   let branding = $state({
     primaryColor: '#0ea5e9',
@@ -48,8 +55,9 @@
     fontBody: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif',
     fontHeading: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif'
   });
-  let users = $state({});
-  const menuItems = ['Applications', 'Dashboard', 'Forms', 'Workflows', 'Companies', 'Users', 'Settings', 'Integrations', 'Help Centre'];
+  let users     = $state({});
+  let workflows = $state([]);
+  const menuItems = ['Applications', 'Dashboard', 'Forms', 'Workflows', 'Rules', 'Checklist', 'Templates', 'Companies', 'Users', 'Settings', 'Integrations', 'Help Centre'];
   const fontOptions = [
     { value: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif', label: 'Inter' },
     { value: 'Roboto, sans-serif', label: 'Roboto' },
@@ -77,6 +85,9 @@
     'Integrations': 'M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z',
     'Companies': 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
     'Workflows': 'M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z',
+    'Rules': 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z',
+    'Checklist': 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+    'Templates': 'M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776',
     'Help Centre': 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
     'Profile': 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
   };
@@ -93,8 +104,8 @@
     selectedPage = 'Dashboard';
     if (response.role === 'Admin') {
       await loadSchema();
-      await loadSchemas();
       await loadUsers();
+      await loadWorkflows();
     }
   }
 
@@ -149,6 +160,11 @@
     schemas = response;
   }
 
+  async function loadArchivedSchemas() {
+    const response = await fetchArchivedSchemas(token);
+    if (!response.error) archivedSchemas = response;
+  }
+
   async function loadUsers() {
     const response = await fetchUsers(token);
     if (response.error) {
@@ -195,18 +211,42 @@
     loadSchema();
   }
 
-  async function deleteForm(id) {
+  async function archiveForm(id) {
+    if (!confirm('Archive this form? It can be restored later from the Archived Forms section.')) return;
     const response = await deleteSchema(id, token);
     if (response.error) {
       error = response.error;
       return;
     }
     schemas = schemas.filter(s => s.id !== id);
+    await loadArchivedSchemas();
+  }
+
+  async function restoreForm(id) {
+    const response = await restoreSchema(id, token);
+    if (response.error) {
+      error = response.error;
+      return;
+    }
+    await loadSchemas();
+    await loadArchivedSchemas();
+  }
+
+  async function loadWorkflows() {
+    const res = await fetchWorkflows(token);
+    if (!res.error) workflows = res;
   }
 
   onMount(async () => {
     await loadBranding();
-    await loadSchemas();
+  });
+
+  // Load schemas only when the Forms page is actually opened
+  $effect(() => {
+    if (selectedPage === 'Forms' && token) {
+      loadSchemas();
+      loadArchivedSchemas();
+    }
   });
 
   let styleVars = $derived(`--brand-primary: ${branding.primaryColor}; --brand-accent: ${branding.accentColor}; --brand-bg: ${branding.backgroundColor}; --brand-surface: ${branding.surfaceColor}; --brand-card: ${branding.cardColor}; --brand-text: ${branding.textColor}; --brand-muted: ${branding.mutedTextColor}; --font-body: ${branding.fontBody}; --font-heading: ${branding.fontHeading};`);
@@ -344,6 +384,15 @@
               Dashboard
             </button>
             <button
+              onclick={() => clientPage = 'applications'}
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {clientPage === 'applications' ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}"
+            >
+              <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+              </svg>
+              My applications
+            </button>
+            <button
               onclick={() => clientPage = 'help'}
               class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {clientPage === 'help' ? 'bg-sky-500/10 text-sky-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}"
             >
@@ -384,7 +433,7 @@
       <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header class="flex shrink-0 items-center border-b border-slate-800 bg-slate-950/95 px-6 py-4">
           <h1 class="text-xl font-semibold text-white">
-            {clientPage === 'profile' ? 'My Profile' : clientPage === 'help' ? 'Help Centre' : 'My Dashboard'}
+            {clientPage === 'profile' ? 'My Profile' : clientPage === 'help' ? 'Help Centre' : clientPage === 'applications' ? 'My Applications' : 'My Dashboard'}
           </h1>
         </header>
         <main class="flex-1 overflow-y-auto p-6">
@@ -392,8 +441,10 @@
             <Profile {token} {user} />
           {:else if clientPage === 'help'}
             <HelpCentre {token} role={user?.role} />
+          {:else if clientPage === 'applications'}
+            <Applications {token} {user} />
           {:else}
-            <ClientPortal {user} />
+            <ClientPortal {user} onApplications={() => clientPage = 'applications'} />
           {/if}
         </main>
       </div>
@@ -420,6 +471,24 @@
                 <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2h-4v-6H9v6H5a2 2 0 01-2-2V9z"/>
               </svg>
               Dashboard
+            </button>
+            <button
+              onclick={() => brokerPage = 'applications'}
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {brokerPage === 'applications' ? 'bg-violet-500/10 text-violet-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}"
+            >
+              <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+              </svg>
+              Applications
+            </button>
+            <button
+              onclick={() => brokerPage = 'company'}
+              class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition {brokerPage === 'company' ? 'bg-violet-500/10 text-violet-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}"
+            >
+              <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              My Company
             </button>
             <button
               onclick={() => brokerPage = 'help'}
@@ -462,7 +531,7 @@
       <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header class="flex shrink-0 items-center border-b border-slate-800 bg-slate-950/95 px-6 py-4">
           <h1 class="text-xl font-semibold text-white">
-            {brokerPage === 'profile' ? 'My Profile' : brokerPage === 'help' ? 'Help Centre' : 'Broker Dashboard'}
+            {brokerPage === 'profile' ? 'My Profile' : brokerPage === 'help' ? 'Help Centre' : brokerPage === 'applications' ? 'Applications' : brokerPage === 'company' ? 'My Company' : 'Broker Dashboard'}
           </h1>
         </header>
         <main class="flex-1 overflow-y-auto p-6">
@@ -470,8 +539,12 @@
             <Profile {token} {user} />
           {:else if brokerPage === 'help'}
             <HelpCentre {token} role={user?.role} />
+          {:else if brokerPage === 'applications'}
+            <Applications {token} {user} />
+          {:else if brokerPage === 'company'}
+            <MyCompany {token} />
           {:else}
-            <BrokerPortal {user} />
+            <BrokerPortal {user} onApplications={() => brokerPage = 'applications'} />
           {/if}
         </main>
       </div>
@@ -608,16 +681,75 @@
               </div>
               <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {#each schemas as s}
-                  <div class="rounded-3xl border border-slate-800 bg-slate-950/90 p-5">
-                    <h4 class="text-base font-semibold text-white">{s.title}</h4>
-                    <p class="mt-1.5 text-sm text-slate-400">{s.description}</p>
-                    <div class="mt-4 flex gap-2">
+                  <div class="flex flex-col gap-4 rounded-3xl border border-slate-800 bg-slate-950/90 p-5">
+                    <div>
+                      <h4 class="text-base font-semibold text-white">{s.title}</h4>
+                      <p class="mt-1.5 text-sm text-slate-400">{s.description}</p>
+                    </div>
+
+                    <!-- Workflow link -->
+                    <div>
+                      <label class="mb-1.5 block text-xs font-medium text-slate-500">Linked workflow</label>
+                      <select
+                        value={s.workflowId ?? ''}
+                        onchange={async (e) => {
+                          const wfId = e.target.value ? Number(e.target.value) : null;
+                          const res = await linkWorkflowToSchema(s.id, wfId, token);
+                          if (!res.error) await loadSchemas();
+                        }}
+                        class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white focus:border-sky-500 focus:outline-none"
+                      >
+                        <option value="">No workflow</option>
+                        {#each workflows as w}
+                          <option value={w.id}>{w.name}</option>
+                        {/each}
+                      </select>
+                      {#if s.workflowName}
+                        <p class="mt-1 text-xs text-emerald-400">✓ Applications auto-assigned to "{s.workflowName}"</p>
+                      {/if}
+                    </div>
+
+                    <div class="flex gap-2 border-t border-slate-800 pt-3">
                       <button class="rounded-2xl bg-sky-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-sky-400" onclick={() => editForm(s.id)}>Edit</button>
-                      <button class="rounded-2xl border border-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800" onclick={() => deleteForm(s.id)}>Delete</button>
+                      <button class="rounded-2xl border border-amber-800/50 px-3 py-2 text-xs font-semibold text-amber-400 transition hover:bg-amber-950" onclick={() => archiveForm(s.id)}>Archive</button>
                     </div>
                   </div>
                 {/each}
               </div>
+
+              <!-- Archived forms -->
+              {#if archivedSchemas.length > 0}
+                <div class="mt-6 border-t border-slate-800 pt-6">
+                  <button
+                    class="flex items-center gap-2 text-sm font-medium text-slate-400 transition hover:text-slate-200"
+                    onclick={() => showArchived = !showArchived}
+                  >
+                    <svg class="h-4 w-4 transition-transform {showArchived ? 'rotate-90' : ''}" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/>
+                    </svg>
+                    Archived forms ({archivedSchemas.length})
+                  </button>
+
+                  {#if showArchived}
+                    <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {#each archivedSchemas as s}
+                        <div class="flex flex-col gap-3 rounded-3xl border border-slate-800/60 bg-slate-950/50 p-5 opacity-70">
+                          <div>
+                            <h4 class="text-base font-semibold text-slate-300">{s.title}</h4>
+                            <p class="mt-1 text-sm text-slate-500">{s.description}</p>
+                            {#if s.archivedAt}
+                              <p class="mt-1.5 text-xs text-slate-600">Archived {new Date(s.archivedAt).toLocaleDateString()}</p>
+                            {/if}
+                          </div>
+                          <div class="border-t border-slate-800 pt-3">
+                            <button class="rounded-2xl border border-emerald-800/50 px-3 py-2 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-950" onclick={() => restoreForm(s.id)}>Restore</button>
+                          </div>
+                        </div>
+                      {/each}
+                    </div>
+                  {/if}
+                </div>
+              {/if}
             </section>
 
           {:else if selectedPage === 'Users'}
@@ -630,11 +762,26 @@
             </section>
 
           {:else if selectedPage === 'Applications'}
-            <FormRunner />
+            <Applications {token} {user} />
 
           {:else if selectedPage === 'Workflows'}
             <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl" style="min-height: 70vh;">
               <Workflows {token} />
+            </section>
+
+          {:else if selectedPage === 'Rules'}
+            <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl" style="min-height: 70vh;">
+              <Rules {token} />
+            </section>
+
+          {:else if selectedPage === 'Checklist'}
+            <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl" style="min-height: 70vh;">
+              <Checklist {token} />
+            </section>
+
+          {:else if selectedPage === 'Templates'}
+            <section class="rounded-3xl border border-slate-800 bg-slate-900/95 p-6 shadow-xl" style="min-height: 70vh;">
+              <Templates {token} />
             </section>
 
           {:else if selectedPage === 'Companies'}

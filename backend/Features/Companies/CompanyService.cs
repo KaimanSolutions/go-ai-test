@@ -27,12 +27,20 @@ public sealed class CompanyService
             })
             .ToList();
 
-    public IEnumerable<object> GetBrokers() =>
-        _context.Companies
-            .Where(c => c.Type == CompanyType.Broker)
-            .OrderBy(c => c.Name)
+    public IEnumerable<object> GetBrokers(string? fcaSearch = null)
+    {
+        var query = _context.Companies
+            .Where(c => c.Type == CompanyType.Broker);
+
+        if (!string.IsNullOrWhiteSpace(fcaSearch))
+            query = query.Where(c => c.FCANumber.Contains(fcaSearch.Trim()));
+
+        return query
+            .OrderBy(c => c.FCANumber)
+            .Take(20)
             .Select(c => (object)new { c.Id, c.Name, c.FCANumber, c.Email })
             .ToList();
+    }
 
     public IEnumerable<object> GetNetworks() =>
         _context.Companies
